@@ -1,0 +1,76 @@
+{
+  "DST": {
+    "Panel": {
+      "Title": "Déclencheurs",
+      "Clear": "Vider",
+      "Empty": "Rien pour l'instant. Les déclencheurs apparaîtront ici au fil du combat."
+    },
+    "Decision": {
+      "Title": "Un déclencheur s'ouvre",
+      "Acknowledge": "Vu"
+    },
+    "Toast": {
+      "Inferred": "Déduit, non observé : à vérifier."
+    },
+    "Control": {
+      "OpenPanel": "Journal des déclencheurs"
+    },
+    "Catalog": {
+      "Title": "Catalogue des déclencheurs",
+      "MenuName": "Catalogue des déclencheurs",
+      "MenuLabel": "Ouvrir le catalogue",
+      "MenuHint": "Activer ou désactiver les déclencheurs livrés, et ajouter les vôtres.",
+      "Intro": "Chaque entrée associe un événement observable à un message. Désactivez ce qui ne sert pas à votre table, et ajoutez vos propres entrées ci-dessous — une entrée qui reprend un identifiant existant le remplace.",
+      "Entry": "Entrée",
+      "Event": "Événement",
+      "Once": "Fenêtre",
+      "Toggle": "Activer / désactiver",
+      "UserEntries": "Vos entrées (JSON)",
+      "UserEntriesHint": "Format : { \"version\": 1, \"entries\": [ … ] }. Copiez le catalogue livré pour partir d'un exemple complet.",
+      "Validate": "Vérifier",
+      "Copy": "Copier le catalogue livré",
+      "Save": "Enregistrer"
+    },
+    "Notify": {
+      "CatalogSaved": "Catalogue enregistré.",
+      "CatalogUnparseable": "Le catalogue n'est pas du JSON valide.",
+      "CatalogProblems": "{count} problème(s) dans le catalogue — voir la console.",
+      "CatalogValid": "Catalogue valide : {count} entrée(s).",
+      "CatalogEmpty": "Aucune entrée personnalisée.",
+      "CatalogCopied": "Catalogue livré copié dans le presse-papiers."
+    },
+    "Settings": {
+      "Enabled": {
+        "Name": "Activer le veilleur",
+        "Hint": "Coupe entièrement la détection sans désinstaller le module."
+      },
+      "NotifyStyle": {
+        "Name": "Style de notification",
+        "Hint": "Comment les déclencheurs vous sont présentés.",
+        "Adaptive": "Adaptatif — bulle discrète, fenêtre seulement pour une décision",
+        "ToastOnly": "Bulles uniquement — jamais de fenêtre",
+        "PanelOnly": "Journal uniquement — rien à l'écran"
+      },
+      "ShowToDirector": {
+        "Name": "M'afficher aussi les déclencheurs des joueurs",
+        "Hint": "Pour le Directeur : voir les notifications envoyées aux joueurs. Décoché, elles restent consultables dans le journal."
+      },
+      "ToastDuration": {
+        "Name": "Durée d'affichage (secondes)",
+        "Hint": "Les décisions restent affichées deux fois et demie plus longtemps que les simples gains."
+      },
+      "LogSize": {
+        "Name": "Taille du journal",
+        "Hint": "Nombre de déclencheurs conservés dans le journal de session."
+      },
+      "InferForcedMovement": {
+        "Name": "Déduire le mouvement forcé",
+        "Hint": "Le système n'automatise pas les poussées, tractions et glissements : le module ne peut que constater qu'une capacité en infligeant vient de se résoudre. Décochez si ces déductions vous gênent plus qu'elles n'aident."
+      },
+      "Debug": {
+        "Name": "Journalisation détaillée",
+        "Hint": "Écrit chaque événement normalisé dans la console."
+      }
+    }
+  }
+}

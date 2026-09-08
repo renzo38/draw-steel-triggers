@@ -1,0 +1,45 @@
+<p class="dst-catalog__intro">{{localize "DST.Catalog.Intro"}}</p>
+
+<section class="dst-catalog__list">
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>{{localize "DST.Catalog.Entry"}}</th>
+        <th>{{localize "DST.Catalog.Event"}}</th>
+        <th>{{localize "DST.Catalog.Once"}}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each entries}}
+        <tr class="{{#unless enabled}}dst-catalog__row--off{{/unless}}">
+          <td>
+            <button type="button" class="dst-catalog__toggle" data-action="toggleEntry" data-entry-id="{{id}}"
+                    title="{{localize 'DST.Catalog.Toggle'}}">
+              <i class="fa-solid {{#if enabled}}fa-toggle-on{{else}}fa-toggle-off{{/if}}"></i>
+            </button>
+          </td>
+          <td>
+            <strong>{{label}}</strong>
+            <br><code>{{id}}</code>
+            {{#if reference}}<br><em>{{reference}}</em>{{/if}}
+          </td>
+          <td><code>{{event}}</code></td>
+          <td>{{once}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</section>
+
+<section class="dst-catalog__editor">
+  <label for="dst-user-catalog">{{localize "DST.Catalog.UserEntries"}}</label>
+  <p class="hint">{{localize "DST.Catalog.UserEntriesHint"}}</p>
+  <textarea id="dst-user-catalog" name="userCatalog" rows="10"
+            placeholder='{"version": 1, "entries": []}'>{{userCatalog}}</textarea>
+  <div class="dst-catalog__actions">
+    <button type="button" data-action="validate"><i class="fa-solid fa-check-double"></i> {{localize "DST.Catalog.Validate"}}</button>
+    <button type="button" data-action="exportDefaults"><i class="fa-solid fa-copy"></i> {{localize "DST.Catalog.Copy"}}</button>
+    <button type="submit"><i class="fa-solid fa-save"></i> {{localize "DST.Catalog.Save"}}</button>
+  </div>
+</section>

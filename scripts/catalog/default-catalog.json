@@ -1,0 +1,935 @@
+{
+  "version": 1,
+  "label": "Catalogue par défaut — Draw Steel Heroes",
+  "entries": [
+    {
+      "id": "core.encounter.start",
+      "label": "Début de rencontre",
+      "reference": "Heroes — Heroic Resources",
+      "event": "encounterStart",
+      "audience": {
+        "kind": "allHeroes"
+      },
+      "severity": "info",
+      "message": "Début de rencontre : tu gagnes {resourceLabel} égal à tes Victoires.",
+      "gain": "= Victoires"
+    },
+    {
+      "id": "core.turn.start",
+      "label": "Gain de début de tour",
+      "reference": "Heroes — Heroic Resources",
+      "event": "turnStart",
+      "audience": {
+        "kind": "subject"
+      },
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.turnGain",
+          "op": "truthy"
+        }
+      ],
+      "message": "Début de ton tour : +{turnGain} {resourceLabel}.",
+      "gain": "{turnGain}"
+    },
+    {
+      "id": "core.triggered.available",
+      "label": "Action déclenchée disponible",
+      "reference": "Heroes — Triggered Actions",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "subject"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "data.matchingTriggeredAbilities.length",
+          "op": "gt",
+          "value": 0
+        }
+      ],
+      "message": "Tu subis des dégâts — action déclenchée possible : {matchingTriggeredAbilities}."
+    },
+    {
+      "id": "fury.ferocity.damaged",
+      "label": "Férocité — dégâts subis",
+      "reference": "Fury — Ferocity in Combat",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "subject",
+        "class": "fury"
+      },
+      "once": "round",
+      "severity": "info",
+      "message": "Première fois ce round que tu subis des dégâts : +1 férocité — 2 au niveau 4+ (Damaging Ferocity), 3 au niveau 10+ (Primordial Ferocity).",
+      "gain": "+1 / +2 / +3"
+    },
+    {
+      "id": "fury.ferocity.winded",
+      "label": "Férocité — essoufflé",
+      "reference": "Fury — Ferocity in Combat",
+      "event": "becameWinded",
+      "audience": {
+        "kind": "subject",
+        "class": "fury"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "message": "Tu deviens essoufflé pour la première fois de la rencontre : +1d3 férocité.",
+      "gain": "+1d3"
+    },
+    {
+      "id": "fury.ferocity.dying",
+      "label": "Férocité — mourant",
+      "reference": "Fury — Ferocity in Combat",
+      "event": "becameDying",
+      "audience": {
+        "kind": "subject",
+        "class": "fury"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "message": "Tu deviens mourant pour la première fois de la rencontre : +1d3 férocité.",
+      "gain": "+1d3"
+    },
+    {
+      "id": "fury.berserker.push",
+      "label": "Berserker — première poussée du tour",
+      "reference": "Fury — Berserker Growing Ferocity Table (4 / 8)",
+      "event": "forcedMovementLikely",
+      "audience": {
+        "kind": "subject",
+        "class": "fury",
+        "subclass": "berserker"
+      },
+      "once": "turn",
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.movementTypes",
+          "op": "includes",
+          "value": "push"
+        },
+        {
+          "path": "subject.resourcePeakThisTurn",
+          "op": "gte",
+          "value": 4
+        }
+      ],
+      "message": "Première poussée de ce tour ({ability}) : +1 élan, 2 à partir de 8 de férocité (niveau 4+).",
+      "conditionText": "Mouvement forcé non automatisé par le système : la stabilité de la cible peut l'avoir annulé.",
+      "gain": "+1 élan (2 au niveau 4+)",
+      "inferred": true
+    },
+    {
+      "id": "fury.reaver.slide",
+      "label": "Reaver — premier glissement du tour",
+      "reference": "Fury — Reaver Growing Ferocity Table (4 / 8)",
+      "event": "forcedMovementLikely",
+      "audience": {
+        "kind": "subject",
+        "class": "fury",
+        "subclass": "reaver"
+      },
+      "once": "turn",
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.movementTypes",
+          "op": "includes",
+          "value": "slide"
+        },
+        {
+          "path": "subject.resourcePeakThisTurn",
+          "op": "gte",
+          "value": 4
+        }
+      ],
+      "message": "Premier glissement de ce tour ({ability}) : +1 élan, 2 à partir de 8 de férocité (niveau 4+).",
+      "conditionText": "Primordial Cunning te permet de glisser au lieu de pousser ; c'est bien le glissement qui compte. Mouvement forcé non automatisé.",
+      "gain": "+1 élan (2 au niveau 4+)",
+      "inferred": true
+    },
+    {
+      "id": "fury.stormwight.vuken.push",
+      "label": "Vuken — première poussée ou mise à terre du tour",
+      "reference": "Fury — Vuken Growing Ferocity Table (4 / 8)",
+      "event": "forcedMovementLikely",
+      "audience": {
+        "kind": "subject",
+        "class": "fury",
+        "subclass": "stormwight"
+      },
+      "once": "turn",
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.movementTypes",
+          "op": "includes",
+          "value": "push"
+        },
+        {
+          "path": "subject.resourcePeakThisTurn",
+          "op": "gte",
+          "value": 4
+        }
+      ],
+      "message": "Première poussée de ce tour ({ability}) : +1 élan, 2 à partir de 8 de férocité (niveau 4+).",
+      "conditionText": "Kit stormwight Vuken (loup) uniquement. Mouvement forcé non automatisé.",
+      "gain": "+1 élan (2 au niveau 4+)",
+      "inferred": true
+    },
+    {
+      "id": "fury.stormwight.vuken.prone",
+      "label": "Vuken — première mise à terre du tour",
+      "reference": "Fury — Vuken Growing Ferocity Table (4 / 8)",
+      "event": "powerRollResolved",
+      "audience": {
+        "kind": "subject",
+        "class": "fury",
+        "subclass": "stormwight"
+      },
+      "once": "turn",
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.appliedConditions",
+          "op": "includes",
+          "value": "prone"
+        },
+        {
+          "path": "subject.resourcePeakThisTurn",
+          "op": "gte",
+          "value": 4
+        }
+      ],
+      "message": "Première mise à terre de ce tour ({ability}) : +1 élan, 2 à partir de 8 de férocité (niveau 4+).",
+      "conditionText": "Kit stormwight Vuken (loup) uniquement. L'application des conditions se fait au clic ; l'entrée réagit au palier obtenu.",
+      "gain": "+1 élan (2 au niveau 4+)"
+    },
+    {
+      "id": "fury.stormwight.boren.grab",
+      "label": "Boren — première prise du tour",
+      "reference": "Fury — Boren Growing Ferocity Table (4 / 8)",
+      "event": "powerRollResolved",
+      "audience": {
+        "kind": "subject",
+        "class": "fury",
+        "subclass": "stormwight"
+      },
+      "once": "turn",
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.appliedConditions",
+          "op": "includes",
+          "value": "grabbed"
+        },
+        {
+          "path": "subject.resourcePeakThisTurn",
+          "op": "gte",
+          "value": 4
+        }
+      ],
+      "message": "Première prise de ce tour ({ability}) : +1 élan, 2 à partir de 8 de férocité (niveau 4+).",
+      "conditionText": "Kit stormwight Boren (ours) uniquement.",
+      "gain": "+1 élan (2 au niveau 4+)"
+    },
+    {
+      "id": "talent.clarity.forcedMovement",
+      "label": "Clarté — mouvement forcé",
+      "reference": "Talent — Clarity in Combat",
+      "event": "forcedMovementLikely",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "talent"
+      },
+      "once": "round",
+      "severity": "info",
+      "inferred": true,
+      "message": "Première fois ce round qu'une créature est mue de force ({ability}) : +1 clarté — 2 au niveau 4+ (Mind Recovery), 3 au niveau 10+ (Clear Mind).",
+      "conditionText": "À confirmer : le système n'automatise pas le mouvement forcé, et la stabilité de la cible peut l'avoir annulé.",
+      "gain": "+1 / +2 / +3"
+    },
+    {
+      "id": "talent.strained.endOfTurn",
+      "label": "Tendu — dégâts de fin de tour",
+      "reference": "Talent — Clarity and Strain",
+      "event": "turnEnd",
+      "audience": {
+        "kind": "subject",
+        "class": "talent"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "data.resourceValue",
+          "op": "lt",
+          "value": 0
+        }
+      ],
+      "message": "Tu es tendu ({resourceValue} clarté) : tu subis {strainDamage} dégâts en fin de tour."
+    },
+    {
+      "id": "censor.wrath.damagedByJudged",
+      "label": "Courroux — dégâts d'une cible jugée",
+      "reference": "Censor — Wrath in Combat",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "subject",
+        "class": "censor"
+      },
+      "once": "round",
+      "severity": "info",
+      "message": "Première fois ce round que tu subis des dégâts : +1 courroux.",
+      "conditionText": "Uniquement si la créature qui t'a blessé est jugée par toi. Ce gain-ci ne progresse pas avec le niveau, contrairement au gain offensif.",
+      "gain": "+1"
+    },
+    {
+      "id": "censor.wrath.damagedJudged",
+      "label": "Courroux — dégâts infligés à une cible jugée",
+      "reference": "Censor — Wrath in Combat",
+      "event": "powerRollResolved",
+      "audience": {
+        "kind": "subject",
+        "class": "censor"
+      },
+      "once": "round",
+      "severity": "info",
+      "message": "Première fois ce round que tu infliges des dégâts ({ability}) : +1 courroux — 2 au niveau 4+ (Wrath Beyond Wrath).",
+      "conditionText": "Uniquement si la cible est jugée par toi.",
+      "gain": "+1 / +2",
+      "when": [
+        {
+          "path": "data.dealtDamage",
+          "op": "truthy"
+        }
+      ]
+    },
+    {
+      "id": "censor.judgment.mainAction",
+      "label": "Jugement — action principale d'une cible jugée",
+      "reference": "Censor — Judgment",
+      "event": "abilityUsed",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "censor"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "data.abilityType",
+          "op": "eq",
+          "value": "main"
+        },
+        {
+          "path": "subject.disposition",
+          "op": "eq",
+          "value": "hostile"
+        }
+      ],
+      "message": "{subject} utilise une action principale — action déclenchée gratuite : dégâts sacrés (2 × Présence).",
+      "conditionText": "Uniquement si {subject} est jugé par toi et dans ta ligne d'effet."
+    },
+    {
+      "id": "conduit.piety.storm",
+      "label": "Piété — domaine de la Tempête",
+      "reference": "Conduit — Storm Domain Piety",
+      "event": "forcedMovementLikely",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "conduit"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "inferred": true,
+      "message": "Un ennemi à portée est mu de force pour la première fois de la rencontre : +2 piété.",
+      "conditionText": "Domaine de la Tempête uniquement, et la cible doit être un ennemi.",
+      "gain": "+2 / +3"
+    },
+    {
+      "id": "conduit.piety.nature",
+      "label": "Piété — domaine de la Nature",
+      "reference": "Conduit — Nature Domain Piety",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "conduit"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.damageTypes",
+          "op": "intersects",
+          "value": [
+            "acid",
+            "cold",
+            "fire",
+            "lightning",
+            "poison",
+            "sonic"
+          ]
+        }
+      ],
+      "message": "Premiers dégâts élémentaires de la rencontre à portée : +2 piété.",
+      "conditionText": "Domaine de la Nature uniquement. Le type de dégâts est déduit du dernier jet : si le module ne l'a pas vu, l'entrée ne se déclenche pas.",
+      "gain": "+2 / +3"
+    },
+    {
+      "id": "conduit.piety.sun",
+      "label": "Piété — domaine du Soleil",
+      "reference": "Conduit — Sun Domain Piety",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "conduit"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.damageTypes",
+          "op": "intersects",
+          "value": [
+            "fire",
+            "holy"
+          ]
+        }
+      ],
+      "message": "Premiers dégâts de feu ou sacrés de la rencontre à portée : +2 piété.",
+      "conditionText": "Domaine du Soleil uniquement, et la cible doit être un ennemi. Le type de dégâts est déduit du dernier jet : si le module ne l'a pas vu, l'entrée ne se déclenche pas.",
+      "gain": "+2 / +3"
+    },
+    {
+      "id": "conduit.piety.protection",
+      "label": "Piété — domaine de la Protection",
+      "reference": "Conduit — Protection Domain Piety",
+      "event": "temporaryStaminaGained",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "conduit"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "message": "Premier gain d'Endurance temporaire de la rencontre à portée : +2 piété.",
+      "conditionText": "Domaine de la Protection uniquement, sur toi ou un allié.",
+      "gain": "+2 / +3"
+    },
+    {
+      "id": "conduit.piety.war",
+      "label": "Piété — domaine de la Guerre",
+      "reference": "Conduit — War Domain Piety",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "conduit"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.amount",
+          "op": "gt",
+          "value": 10
+        }
+      ],
+      "message": "Gros coup encaissé à portée ({amount} dégâts) : +2 piété — 3 au niveau 4+ (Blessed Domain).",
+      "conditionText": "Domaine de la Guerre uniquement. Le seuil réel est « plus de 10 + ton niveau sur un seul tour » : le module ne cumule pas les dégâts d'un tour, il signale un coup unique dépassant 10.",
+      "gain": "+2 / +3"
+    },
+    {
+      "id": "elementalist.essence.damage",
+      "label": "Essence — dégâts typés à portée",
+      "reference": "Elementalist — Essence in Combat",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "elementalist"
+      },
+      "once": "round",
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.damageTypes",
+          "op": "excludes",
+          "value": [
+            "untyped",
+            "holy"
+          ]
+        }
+      ],
+      "message": "Premiers dégâts non-neutres et non-sacrés de ce round à portée : +1 essence — 2 au niveau 4+ (Font of Essence).",
+      "gain": "+1 / +2"
+    },
+    {
+      "id": "elementalist.persistent.bigHit",
+      "label": "Magie persistante interrompue",
+      "reference": "Elementalist — Persistent Magic",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "subject",
+        "class": "elementalist"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "data.amount",
+          "op": "gte",
+          "value": 10
+        }
+      ],
+      "message": "Tu encaisses {amount} dégâts : si le total du tour atteint 5 × ta Raison, tu cesses d'entretenir tes capacités persistantes."
+    },
+    {
+      "id": "null.discipline.malice",
+      "label": "Discipline — dépense de Malice",
+      "reference": "Null — Discipline in Combat",
+      "event": "maliceSpent",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "null"
+      },
+      "once": "round",
+      "severity": "info",
+      "message": "Première dépense de Malice de ce round ({ability}) : +1 discipline.",
+      "gain": "+1"
+    },
+    {
+      "id": "null.discipline.nullField",
+      "label": "Discipline — action principale dans le champ nul",
+      "reference": "Null — Discipline in Combat",
+      "event": "abilityUsed",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 1,
+        "class": "null"
+      },
+      "once": "round",
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.abilityType",
+          "op": "eq",
+          "value": "main"
+        }
+      ],
+      "message": "Une action principale est utilisée au contact : +1 discipline — 2 au niveau 4+ (Regenerative Field).",
+      "conditionText": "Uniquement si la créature est ennemie et se trouve dans l'aire de ton Champ Nul. L'aire de base est une aura de 1, mais plusieurs capacités l'agrandissent : la portée retenue ici est la plus petite, élargis-la dans ton catalogue si tu joues Champ Nul agrandi.",
+      "gain": "+1 / +2"
+    },
+    {
+      "id": "shadow.insight.surge",
+      "label": "Perspicacité — dégâts avec élans",
+      "reference": "Shadow — Insight in Combat",
+      "event": "powerRollResolved",
+      "audience": {
+        "kind": "subject",
+        "class": "shadow"
+      },
+      "once": "round",
+      "severity": "info",
+      "message": "Première fois ce round que tu infliges des dégâts avec des élans ({ability}) : +1 perspicacité — 2 au niveau 4+ (Surge of Insight), 3 au niveau 10+ (Death Pool).",
+      "conditionText": "Uniquement si tu as incorporé au moins 1 élan à ces dégâts.",
+      "gain": "+1 / +2 / +3",
+      "when": [
+        {
+          "path": "data.dealtDamage",
+          "op": "truthy"
+        }
+      ]
+    },
+    {
+      "id": "tactician.focus.markedDamaged",
+      "label": "Concentration — cible marquée blessée",
+      "reference": "Tactician — Focus in Combat",
+      "event": "powerRollResolved",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "tactician"
+      },
+      "once": "round",
+      "severity": "info",
+      "message": "Première fois ce round qu'un héros inflige des dégâts ({ability}) : +1 concentration — 2 au niveau 4+ (Focus on Their Weaknesses).",
+      "conditionText": "Uniquement si la cible est marquée par toi.",
+      "gain": "+1 / +2",
+      "when": [
+        {
+          "path": "data.dealtDamage",
+          "op": "truthy"
+        }
+      ]
+    },
+    {
+      "id": "tactician.focus.allyHeroic",
+      "label": "Concentration — capacité héroïque alliée",
+      "reference": "Tactician — Focus in Combat",
+      "event": "abilityUsed",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "tactician",
+        "excludeSubject": true
+      },
+      "once": "round",
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.resourceCost",
+          "op": "gt",
+          "value": 0
+        },
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        }
+      ],
+      "message": "Première capacité héroïque alliée de ce round à portée ({ability} par {subject}) : +1 concentration.",
+      "gain": "+1"
+    },
+    {
+      "id": "troubadour.drama.heroWinded",
+      "label": "Drame — un héros devient essoufflé",
+      "reference": "Troubadour — Drama in Combat",
+      "event": "becameWinded",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "troubadour"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "when": [
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        }
+      ],
+      "message": "{subject} devient essoufflé pour la première fois de la rencontre : +2 drame.",
+      "gain": "+2"
+    },
+    {
+      "id": "troubadour.drama.natural",
+      "label": "Drame — naturel 19 ou 20",
+      "reference": "Troubadour — Drama in Combat",
+      "event": "naturalCritical",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "troubadour"
+      },
+      "severity": "info",
+      "message": "{subject} obtient un naturel {natural} : +3 drame.",
+      "conditionText": "Uniquement si la créature est dans ta ligne d'effet.",
+      "gain": "+3"
+    },
+    {
+      "id": "troubadour.drama.heroDies",
+      "label": "Drame — mort d'un héros",
+      "reference": "Troubadour — Drama in Combat",
+      "event": "becameDying",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "troubadour"
+      },
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.dead",
+          "op": "truthy"
+        }
+      ],
+      "message": "{subject} meurt : +10 drame.",
+      "gain": "+10"
+    },
+    {
+      "id": "core.condition.applied",
+      "label": "Condition appliquée",
+      "reference": "Heroes — Conditions",
+      "event": "conditionApplied",
+      "audience": {
+        "kind": "subject"
+      },
+      "severity": "info",
+      "message": "Tu es {condition}."
+    },
+    {
+      "id": "core.condition.removed",
+      "label": "Condition levée",
+      "reference": "Heroes — Conditions",
+      "event": "conditionRemoved",
+      "audience": {
+        "kind": "subject"
+      },
+      "severity": "info",
+      "message": "Tu n'es plus {condition}."
+    },
+    {
+      "id": "conduit.piety.creation",
+      "label": "Piété — domaine de la Création",
+      "reference": "Conduit — de la Création Domain Piety",
+      "event": "abilityUsed",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "conduit"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "message": "Première capacité de zone utilisée à portée cette rencontre ({ability}) : +2 piété — 3 au niveau 4+ (Blessed Domain).",
+      "conditionText": "Domaine de la Création uniquement.",
+      "gain": "+2 / +3",
+      "when": [
+        {
+          "path": "data.keywords",
+          "op": "includes",
+          "value": "area"
+        }
+      ]
+    },
+    {
+      "id": "conduit.piety.death",
+      "label": "Piété — domaine de la Mort",
+      "reference": "Conduit — de la Mort Domain Piety",
+      "event": "reducedToZero",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "conduit"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "message": "{subject} tombe à 0 d'Endurance pour la première fois de la rencontre : +2 piété — 3 au niveau 4+ (Blessed Domain).",
+      "conditionText": "Domaine de la Mort uniquement, et la cible ne doit pas être un sbire. La règle couvre aussi « un solo devient essoufflé », non détecté ici.",
+      "gain": "+2 / +3"
+    },
+    {
+      "id": "conduit.piety.fate.ally",
+      "label": "Piété — domaine du Destin (allié)",
+      "reference": "Conduit — du Destin (allié) Domain Piety",
+      "event": "powerRollResolved",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "conduit"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "message": "Premier palier 3 obtenu par un héros à portée cette rencontre ({ability}) : +2 piété — 3 au niveau 4+ (Blessed Domain).",
+      "conditionText": "Domaine du Destin uniquement.",
+      "gain": "+2 / +3",
+      "when": [
+        {
+          "path": "data.tier",
+          "op": "eq",
+          "value": 3
+        },
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        }
+      ]
+    },
+    {
+      "id": "conduit.piety.fate.enemy",
+      "label": "Piété — domaine du Destin (ennemi)",
+      "reference": "Conduit — du Destin (ennemi) Domain Piety",
+      "event": "powerRollResolved",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "conduit"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "message": "Premier palier 1 obtenu par un ennemi à portée cette rencontre ({ability}) : +2 piété — 3 au niveau 4+ (Blessed Domain).",
+      "conditionText": "Domaine du Destin uniquement.",
+      "gain": "+2 / +3",
+      "when": [
+        {
+          "path": "data.tier",
+          "op": "eq",
+          "value": 1
+        },
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "npc"
+        }
+      ]
+    },
+    {
+      "id": "conduit.piety.knowledge",
+      "label": "Piété — domaine de la Connaissance",
+      "reference": "Conduit — de la Connaissance Domain Piety",
+      "event": "maliceSpent",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "conduit"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "message": "Première dépense de Malice de la rencontre ({ability}) : +2 piété — 3 au niveau 4+ (Blessed Domain).",
+      "conditionText": "Domaine de la Connaissance uniquement.",
+      "gain": "+2 / +3"
+    },
+    {
+      "id": "conduit.piety.life",
+      "label": "Piété — domaine de la Vie",
+      "reference": "Conduit — de la Vie Domain Piety",
+      "event": "healed",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "conduit"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "message": "Première Endurance regagnée à portée cette rencontre ({subject}) : +2 piété — 3 au niveau 4+ (Blessed Domain).",
+      "conditionText": "Domaine de la Vie uniquement.",
+      "gain": "+2 / +3"
+    },
+    {
+      "id": "conduit.piety.love",
+      "label": "Piété — domaine de l'Amour",
+      "reference": "Conduit — de l'Amour Domain Piety",
+      "event": "abilityUsed",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "conduit"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "message": "Capacité utilisée à portée ({ability} par {subject}) : +2 piété — 3 au niveau 4+ (Blessed Domain).",
+      "conditionText": "Domaine de l'Amour uniquement, et seulement si la capacité cible un allié ou s'il s'agit de la manœuvre Aid Attack. Le module ne distingue pas ces cas : à toi de confirmer.",
+      "gain": "+2 / +3"
+    },
+    {
+      "id": "conduit.piety.trickery",
+      "label": "Piété — domaine de la Fourberie",
+      "reference": "Conduit — de la Fourberie Domain Piety",
+      "event": "abilityUsed",
+      "audience": {
+        "kind": "heroesWithin",
+        "range": 10,
+        "class": "conduit"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "message": "Capacité utilisée à portée ({ability} par {subject}) : +2 piété — 3 au niveau 4+ (Blessed Domain).",
+      "conditionText": "Domaine de la Fourberie uniquement, et seulement s'il s'agit de la manœuvre Aid Attack ou Hide. Le module ne détecte pas les manœuvres nommément : à toi de confirmer.",
+      "gain": "+2 / +3"
+    },
+    {
+      "id": "null.metakinetic.damaged",
+      "label": "Metakinetic — dégâts subis ou mouvement forcé",
+      "reference": "Null — Metakinetic Mastery Table (4 / 8)",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "subject",
+        "class": "null",
+        "subclass": "metakinetic"
+      },
+      "once": "round",
+      "severity": "info",
+      "when": [
+        {
+          "path": "subject.resourcePeakThisTurn",
+          "op": "gte",
+          "value": 4
+        }
+      ],
+      "message": "Première fois ce round que tu subis des dégâts : +1 élan, 2 à partir de 8 de discipline (niveau 4+).",
+      "conditionText": "La règle couvre aussi « ou es mu de force », y compris si tu résistes à l'effet — le mouvement forcé subi n'est pas détecté.",
+      "gain": "+1 élan (2 au niveau 4+)"
+    },
+    {
+      "id": "null.cryokinetic.grab",
+      "label": "Cryokinetic — première prise du tour",
+      "reference": "Null — Cryokinetic Mastery Table (4 / 8)",
+      "event": "powerRollResolved",
+      "audience": {
+        "kind": "subject",
+        "class": "null",
+        "subclass": "cryokinetic"
+      },
+      "once": "turn",
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.appliedConditions",
+          "op": "includes",
+          "value": "grabbed"
+        },
+        {
+          "path": "subject.resourcePeakThisTurn",
+          "op": "gte",
+          "value": 4
+        }
+      ],
+      "message": "Première prise de ce tour ({ability}) : +1 élan, 2 à partir de 8 de discipline (niveau 4+).",
+      "conditionText": "La règle couvre aussi « ou un ennemi se déplace d'une case ou plus dans l'aire de ton Champ Nul », non détecté.",
+      "gain": "+1 élan (2 au niveau 4+)"
+    },
+    {
+      "id": "elementalist.ward.delightful",
+      "label": "Ward of Delightful Consequences",
+      "reference": "Elementalist — Elementalist Ward",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "subject",
+        "class": "elementalist"
+      },
+      "once": "round",
+      "severity": "info",
+      "message": "Première fois ce round que tu subis des dégâts : +1 élan.",
+      "conditionText": "Uniquement si tu as choisi le Ward of Delightful Consequences.",
+      "gain": "+1 élan"
+    },
+    {
+      "id": "troubadour.melodrama.natural2",
+      "label": "Melodrama — naturel 2",
+      "reference": "Troubadour — Melodrama (4th Level)",
+      "event": "naturalRoll",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "troubadour"
+      },
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.natural",
+          "op": "eq",
+          "value": 2
+        }
+      ],
+      "message": "{subject} obtient un naturel 2 : +2 drame.",
+      "conditionText": "Niveau 4+, et seulement si tu as retenu cet événement parmi les deux que Melodrama t'accorde.",
+      "gain": "+2"
+    },
+    {
+      "id": "troubadour.melodrama.malice",
+      "label": "Melodrama — dégâts par Malice ou action de vilain",
+      "reference": "Troubadour — Melodrama (4th Level)",
+      "event": "maliceSpent",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "troubadour"
+      },
+      "once": "encounter",
+      "severity": "info",
+      "message": "Première capacité à coût de Malice de la rencontre ({ability}) : +2 drame.",
+      "conditionText": "Niveau 4+, événement Melodrama à retenir, et la capacité doit avoir infligé des dégâts à un héros.",
+      "gain": "+2"
+    }
+  ]
+}

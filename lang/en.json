@@ -1,0 +1,76 @@
+{
+  "DST": {
+    "Panel": {
+      "Title": "Triggers",
+      "Clear": "Clear",
+      "Empty": "Nothing yet. Triggers will appear here as the fight goes on."
+    },
+    "Decision": {
+      "Title": "A trigger is open",
+      "Acknowledge": "Got it"
+    },
+    "Toast": {
+      "Inferred": "Inferred, not observed — please verify."
+    },
+    "Control": {
+      "OpenPanel": "Trigger log"
+    },
+    "Catalog": {
+      "Title": "Trigger catalogue",
+      "MenuName": "Trigger catalogue",
+      "MenuLabel": "Open the catalogue",
+      "MenuHint": "Switch shipped triggers on or off, and add your own.",
+      "Intro": "Each entry maps an observable event to a message. Switch off whatever your table does not need, and add your own entries below — an entry reusing an existing id replaces it.",
+      "Entry": "Entry",
+      "Event": "Event",
+      "Once": "Window",
+      "Toggle": "Enable / disable",
+      "UserEntries": "Your entries (JSON)",
+      "UserEntriesHint": "Format: { \"version\": 1, \"entries\": [ … ] }. Copy the shipped catalogue for a complete example.",
+      "Validate": "Validate",
+      "Copy": "Copy the shipped catalogue",
+      "Save": "Save"
+    },
+    "Notify": {
+      "CatalogSaved": "Catalogue saved.",
+      "CatalogUnparseable": "The catalogue is not valid JSON.",
+      "CatalogProblems": "{count} problem(s) in the catalogue — see the console.",
+      "CatalogValid": "Catalogue valid: {count} entry/entries.",
+      "CatalogEmpty": "No custom entries.",
+      "CatalogCopied": "Shipped catalogue copied to the clipboard."
+    },
+    "Settings": {
+      "Enabled": {
+        "Name": "Enable the watcher",
+        "Hint": "Stops detection entirely without uninstalling the module."
+      },
+      "NotifyStyle": {
+        "Name": "Notification style",
+        "Hint": "How triggers are presented to you.",
+        "Adaptive": "Adaptive — discreet toast, dialog only for a decision",
+        "ToastOnly": "Toasts only — never a dialog",
+        "PanelOnly": "Log only — nothing on screen"
+      },
+      "ShowToDirector": {
+        "Name": "Also show me players' triggers",
+        "Hint": "For the Director: see the notifications sent to players. Unchecked, they remain readable in the log."
+      },
+      "ToastDuration": {
+        "Name": "Display duration (seconds)",
+        "Hint": "Decisions stay on screen two and a half times longer than plain resource gains."
+      },
+      "LogSize": {
+        "Name": "Log size",
+        "Hint": "How many triggers the session log keeps."
+      },
+      "InferForcedMovement": {
+        "Name": "Infer forced movement",
+        "Hint": "The system does not automate pushes, pulls and slides: the module can only note that an ability inflicting one has resolved. Uncheck if those inferences get in the way more than they help."
+      },
+      "Debug": {
+        "Name": "Verbose logging",
+        "Hint": "Writes every normalized event to the console."
+      }
+    }
+  }
+}
