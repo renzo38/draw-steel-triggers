@@ -1,29 +1,34 @@
-<div class="dst-panel__bar">
-  <button type="button" data-action="clear"><i class="fa-solid fa-broom"></i> {{localize "DST.Panel.Clear"}}</button>
-</div>
+{{!-- ApplicationV2 requires each part to render exactly one root element. --}}
+<div class="dst-panel__root">
 
-{{#if empty}}
-  <p class="dst-panel__empty">{{localize "DST.Panel.Empty"}}</p>
-{{else}}
-  <ul class="dst-log">
-    {{#each entries}}
-      <li class="dst-log__item dst-log__item--{{severity}}{{#if inferred}} dst-log__item--inferred{{/if}}">
-        <div class="dst-log__head">
-          <button type="button" class="dst-log__who" data-action="openActor" data-uuid="{{recipientUuid}}">
-            {{recipientName}}
-          </button>
-          {{#if gain}}<span class="dst-log__gain">{{gain}}</span>{{/if}}
-          <time>{{time}}</time>
-        </div>
-        <p class="dst-log__message">{{message}}</p>
-        {{#if conditionText}}
-          <p class="dst-log__condition"><i class="fa-solid fa-circle-question"></i> {{conditionText}}</p>
-        {{/if}}
-        {{#if inferred}}
-          <p class="dst-log__flag"><i class="fa-solid fa-triangle-exclamation"></i> {{localize "DST.Toast.Inferred"}}</p>
-        {{/if}}
-        {{#if reference}}<p class="dst-log__ref">{{reference}}</p>{{/if}}
-      </li>
-    {{/each}}
-  </ul>
-{{/if}}
+  <div class="dst-panel__bar">
+    <button type="button" data-action="clear"><i class="fa-solid fa-broom"></i> {{localize "DST.Panel.Clear"}}</button>
+  </div>
+
+  {{#if empty}}
+    <p class="dst-panel__empty">{{localize "DST.Panel.Empty"}}</p>
+  {{else}}
+    <ul class="dst-log">
+      {{#each entries}}
+        <li class="dst-log__item dst-log__item--{{severity}}{{#if inferred}} dst-log__item--inferred{{/if}}">
+          <div class="dst-log__head">
+            <button type="button" class="dst-log__who" data-action="openActor" data-uuid="{{recipientUuid}}">
+              {{recipientName}}
+            </button>
+            {{#if gain}}<span class="dst-log__gain">{{gain}}</span>{{/if}}
+            <time>{{time}}</time>
+          </div>
+          <p class="dst-log__message">{{message}}</p>
+          {{#if conditionText}}
+            <p class="dst-log__condition"><i class="fa-solid fa-circle-question"></i> {{conditionText}}</p>
+          {{/if}}
+          {{#if inferred}}
+            <p class="dst-log__flag"><i class="fa-solid fa-triangle-exclamation"></i> {{localize "DST.Toast.Inferred"}}</p>
+          {{/if}}
+          {{#if reference}}<p class="dst-log__ref">{{reference}}</p>{{/if}}
+        </li>
+      {{/each}}
+    </ul>
+  {{/if}}
+
+</div>

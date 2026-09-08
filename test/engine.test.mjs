@@ -14,6 +14,7 @@ import { dirname, join } from "node:path";
 
 import Ledger from "../scripts/engine/ledger.mjs";
 import { RESULT_PART_TYPES, collectTierOutcomes } from "../scripts/engine/observers.mjs";
+import { runTemplateTests } from "./templates.test.mjs";
 import { evaluateConditions, interpolate, matchEvent, readPath, resolveAudience } from "../scripts/engine/matcher.mjs";
 import { validateCatalog, validateEntry } from "../scripts/catalog/catalog-validation.mjs";
 
@@ -462,5 +463,7 @@ test("duplicate ids are caught", () => {
 });
 
 /* -------------------------------------------------- */
+
+passed += runTemplateTests();
 
 console.log(`\n${passed} tests passed${process.exitCode ? " (with failures above)" : ""}.\n`);

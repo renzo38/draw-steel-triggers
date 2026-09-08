@@ -8,6 +8,7 @@ import WatchPanel from "./apps/watch-panel.mjs";
 import { loadCatalog } from "./catalog/catalog.mjs";
 import { registerObservers } from "./engine/observers.mjs";
 import { registerSettings } from "./settings.mjs";
+import { archiveToChat } from "./ui/chat-archive.mjs";
 import { showToast } from "./ui/toast.mjs";
 
 /* -------------------------------------------------- */
@@ -21,7 +22,12 @@ Hooks.once("init", () => {
   registerSettings();
 
   configureDispatcher({
-    present: (notifications) => routeLocally(notifications, { asDirector: true }),
+    present: (notifications) => {
+      routeLocally(notifications, { asDirector: true });
+      // Archiving happens here, on the one client that runs detection, so the
+      // whisper is created once rather than once per connected player.
+      for (const notification of notifications) archiveToChat(notification);
+    },
     broadcast: (notifications) => {
       // Send each notification only to the users who own the hero concerned.
       // A player has no business seeing another player's prompts.
@@ -115,6 +121,11 @@ Hooks.on("getSceneControlButtons", (controls) => {
     title: "DST.Control.OpenPanel",
     icon: "fa-solid fa-bell",
     button: true,
+    visible: true,
+    // v13+ sorts tools by `order`; omitting it leaves the button's position to
+    // chance, which is a poor property for the one control that makes the log
+    // discoverable at all.
+    order: 100,
     onChange: () => WatchPanel.instance.render({ force: true }),
   };
 });

@@ -10,7 +10,9 @@
       "Acknowledge": "Vu"
     },
     "Toast": {
-      "Inferred": "Déduit, non observé : à vérifier."
+      "Inferred": "Déduit, non observé : à vérifier.",
+      "ClickHint": "Cliquer pour ouvrir le journal des déclencheurs",
+      "Dismiss": "Fermer"
     },
     "Control": {
       "OpenPanel": "Journal des déclencheurs"
@@ -70,6 +72,13 @@
       "Debug": {
         "Name": "Journalisation détaillée",
         "Hint": "Écrit chaque événement normalisé dans la console."
+      },
+      "ChatArchive": {
+        "Name": "Archiver dans le chat",
+        "Hint": "Une bulle manquée est une information perdue. L'archivage chuchote un double dans le chat, visible uniquement du joueur concerné et des Directeurs — le chat commun reste lisible, et l'information se retrouve après un rechargement.",
+        "Never": "Jamais — la bulle et le journal suffisent",
+        "Decisions": "Décisions seulement — recommandé",
+        "All": "Tout, y compris les gains de ressource"
       }
     }
   }

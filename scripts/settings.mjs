@@ -48,6 +48,20 @@ export function registerSettings() {
     default: 8,
   });
 
+  register(SETTINGS.chatArchive, {
+    name: "DST.Settings.ChatArchive.Name",
+    hint: "DST.Settings.ChatArchive.Hint",
+    scope: "world",
+    config: true,
+    type: String,
+    choices: {
+      never: "DST.Settings.ChatArchive.Never",
+      decisions: "DST.Settings.ChatArchive.Decisions",
+      all: "DST.Settings.ChatArchive.All",
+    },
+    default: "decisions",
+  });
+
   register(SETTINGS.logSize, {
     name: "DST.Settings.LogSize.Name",
     hint: "DST.Settings.LogSize.Hint",

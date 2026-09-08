@@ -10,7 +10,9 @@
       "Acknowledge": "Got it"
     },
     "Toast": {
-      "Inferred": "Inferred, not observed — please verify."
+      "Inferred": "Inferred, not observed — please verify.",
+      "ClickHint": "Click to open the trigger log",
+      "Dismiss": "Dismiss"
     },
     "Control": {
       "OpenPanel": "Trigger log"
@@ -70,6 +72,13 @@
       "Debug": {
         "Name": "Verbose logging",
         "Hint": "Writes every normalized event to the console."
+      },
+      "ChatArchive": {
+        "Name": "Archive to chat",
+        "Hint": "A missed toast is lost information. Archiving whispers a copy into chat, visible only to the player concerned and the Directors — the shared log stays readable, and the information survives a reload.",
+        "Never": "Never — the toast and the log are enough",
+        "Decisions": "Decisions only — recommended",
+        "All": "Everything, resource gains included"
       }
     }
   }

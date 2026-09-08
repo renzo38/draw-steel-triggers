@@ -2,7 +2,7 @@
   "id": "draw-steel-triggers",
   "title": "Draw Steel — Veilleur de Déclencheurs",
   "description": "Signale aux joueurs et au Directeur les déclencheurs qui viennent de s'ouvrir : gains de ressource héroïque, actions déclenchées, conditions et fins d'effet. Signalement uniquement — le module n'écrit jamais sur les fiches.",
-  "version": "0.1.2",
+  "version": "0.2.1",
   "compatibility": {
     "minimum": "13",
     "verified": "14"

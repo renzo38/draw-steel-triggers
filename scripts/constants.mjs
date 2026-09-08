@@ -82,6 +82,7 @@ export const SETTINGS = Object.freeze({
   notifyStyle: "notifyStyle",
   showToDirector: "showToDirector",
   toastDuration: "toastDuration",
+  chatArchive: "chatArchive",
   logSize: "logSize",
   userCatalog: "userCatalog",
   disabledEntries: "disabledEntries",

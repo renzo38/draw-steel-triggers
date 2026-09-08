@@ -1,25 +1,30 @@
-<div class="dst-decision__body">
-  <p class="dst-decision__who">
-    <button type="button" class="dst-decision__link" data-action="openActor">{{notification.recipientName}}</button>
-  </p>
+{{!-- ApplicationV2 requires each part to render exactly one root element. --}}
+<div class="dst-decision__root">
 
-  <p class="dst-decision__message">{{notification.message}}</p>
+  <div class="dst-decision__body">
+    <p class="dst-decision__who">
+      <button type="button" class="dst-decision__link" data-action="openActor">{{notification.recipientName}}</button>
+    </p>
 
-  {{#if notification.conditionText}}
-    <p class="dst-decision__condition"><i class="fa-solid fa-circle-question"></i> {{notification.conditionText}}</p>
-  {{/if}}
+    <p class="dst-decision__message">{{notification.message}}</p>
 
-  {{#if notification.inferred}}
-    <p class="dst-decision__flag"><i class="fa-solid fa-triangle-exclamation"></i> {{localize "DST.Toast.Inferred"}}</p>
-  {{/if}}
+    {{#if notification.conditionText}}
+      <p class="dst-decision__condition"><i class="fa-solid fa-circle-question"></i> {{notification.conditionText}}</p>
+    {{/if}}
 
-  {{#if notification.reference}}
-    <p class="dst-decision__ref">{{notification.reference}}</p>
-  {{/if}}
+    {{#if notification.inferred}}
+      <p class="dst-decision__flag"><i class="fa-solid fa-triangle-exclamation"></i> {{localize "DST.Toast.Inferred"}}</p>
+    {{/if}}
+
+    {{#if notification.reference}}
+      <p class="dst-decision__ref">{{notification.reference}}</p>
+    {{/if}}
+  </div>
+
+  <footer class="dst-decision__footer">
+    <button type="button" data-action="acknowledge">
+      <i class="fa-solid fa-check"></i> {{localize "DST.Decision.Acknowledge"}}
+    </button>
+  </footer>
+
 </div>
-
-<footer class="dst-decision__footer">
-  <button type="button" data-action="acknowledge">
-    <i class="fa-solid fa-check"></i> {{localize "DST.Decision.Acknowledge"}}
-  </button>
-</footer>
