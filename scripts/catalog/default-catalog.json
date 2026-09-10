@@ -268,7 +268,109 @@
           "value": 0
         }
       ],
-      "message": "Tu es tendu ({resourceValue} clarté) : tu subis {strainDamage} dégâts en fin de tour."
+      "message": "Tu es tendu ({resourceValue} clarté) : tu subis {strainDamage} dégâts en fin de tour.",
+      "conditionText": "Au niveau 7+ (Cascading Strain), tu peux faire subir ces mêmes dégâts à un ennemi à portée de Pointe Mentale. Au niveau 10+ (Psion), tu peux choisir de ne pas les subir du tout."
+    },
+    {
+      "id": "talent.telepathy.feedbackLoop",
+      "label": "Boucle de Rétroaction",
+      "reference": "Talent — Feedback Loop (Télépathie, niveau 1)",
+      "event": "powerRollResolved",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "talent",
+        "subclass": "telepathy"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "data.dealtDamage",
+          "op": "truthy"
+        },
+        {
+          "path": "subject.disposition",
+          "op": "eq",
+          "value": "hostile"
+        }
+      ],
+      "message": "{subject} inflige des dégâts ({ability}) — action déclenchée : {subject} subit des dégâts psychiques égaux à la MOITIÉ des dégâts infligés.",
+      "conditionText": "Uniquement si la victime est un allié et si {subject} est à 10 cases de toi. La distance affichée est mesurée depuis {subject}."
+    },
+    {
+      "id": "talent.chronopathy.again",
+      "label": "Encore — relance",
+      "reference": "Talent — Again (Chronopathie, niveau 1)",
+      "event": "powerRollResolved",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "talent",
+        "subclass": "chronopathy"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "data.tier",
+          "op": "eq",
+          "value": 1
+        }
+      ],
+      "message": "Palier 1 pour {subject} ({ability}) — action déclenchée : {subject} relance et garde le nouveau jet.",
+      "conditionText": "Portée 10. La capacité s'emploie APRÈS avoir vu le résultat, ce qui la rend parfaitement lisible ici. Signalée uniquement sur les paliers 1 pour ne pas annoncer chaque jet de la rencontre — elle sert aussi à faire relancer le palier 3 d'un ennemi, cas que le module ne signale pas."
+    },
+    {
+      "id": "talent.telekinesis.repel",
+      "label": "Repousser — dégâts ou mouvement forcé",
+      "reference": "Talent — Repel (Télékinésie, niveau 1)",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "talent",
+        "subclass": "telekinesis"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        }
+      ],
+      "message": "{subject} subit des dégâts — action déclenchée : {subject} n'en subit que la moitié.",
+      "conditionText": "Portée 10, sur toi ou un allié. Le même déclencheur s'ouvre sur un mouvement forcé (réduction de Raison cases, et si la distance tombe à 0, poussée de la source) — le module ne le signale pas ici, le mouvement forcé n'étant jamais observé de façon fiable."
+    },
+    {
+      "id": "talent.ward.repulsive",
+      "label": "Gardien Répulsif",
+      "reference": "Talent — Repulsive Ward",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "subject",
+        "class": "talent"
+      },
+      "severity": "decision",
+      "message": "Tu subis des dégâts — action déclenchée gratuite : pousser la créature adjacente jusqu'à Raison cases.",
+      "conditionText": "Uniquement avec le gardien Répulsif, et si la source des dégâts t'est adjacente. Les trois autres gardiens (Entropie, Acier, Évanescent) s'appliquent seuls, sans action. Désactive cette entrée si tu as pris l'un d'eux."
+    },
+    {
+      "id": "talent.mindRecovery",
+      "label": "Récupération Mentale — convertir un soin",
+      "reference": "Talent — Mind Recovery (niveau 4)",
+      "event": "healed",
+      "audience": {
+        "kind": "subject",
+        "class": "talent",
+        "minLevel": 4
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "subject.resourceValue",
+          "op": "lt",
+          "value": 0
+        }
+      ],
+      "message": "Tu es tendu et tu viens de regagner {amount} Endurance — si c'était une Récupération, tu pouvais y renoncer pour gagner 3 clarté à la place.",
+      "conditionText": "Uniquement si le soin vient d'une Récupération dépensée. Attention au tempo : le choix précède le soin, ce signal arrive après — à rejouer d'un commun accord."
     },
     {
       "id": "censor.wrath.damagedByJudged",
@@ -330,6 +432,129 @@
       ],
       "message": "{subject} utilise une action principale — action déclenchée gratuite : dégâts sacrés (2 × Présence).",
       "conditionText": "Uniquement si {subject} est jugé par toi et dans ta ligne d'effet."
+    },
+    {
+      "id": "censor.judgment.order.exorcist",
+      "label": "Bénéfice d'ordre — Exorciste",
+      "reference": "Censor — Judgment Order Benefit",
+      "event": "abilityUsed",
+      "audience": {
+        "kind": "subject",
+        "class": "censor",
+        "subclass": "exorcist"
+      },
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.abilityId",
+          "op": "in",
+          "value": [
+            "judgment",
+            "jugement"
+          ]
+        }
+      ],
+      "message": "Premier Jugement du tour : tu peux te téléporter jusqu'à 2 × Présence cases. Le déplacement doit te rapprocher de la cible ; aucune ligne d'effet requise vers l'arrivée.",
+      "conditionText": "Uniquement si ce Jugement a bien jugé une créature — les actions déclenchées gratuites payées 1 courroux utilisent la même capacité sans juger personne, et n'ouvrent pas ce bénéfice.",
+      "once": "turn"
+    },
+    {
+      "id": "censor.judgment.order.oracle",
+      "label": "Bénéfice d'ordre — Oracle",
+      "reference": "Censor — Judgment Order Benefit",
+      "event": "abilityUsed",
+      "audience": {
+        "kind": "subject",
+        "class": "censor",
+        "subclass": "oracle"
+      },
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.abilityId",
+          "op": "in",
+          "value": [
+            "judgment",
+            "jugement"
+          ]
+        }
+      ],
+      "message": "Premier Jugement du tour : tu peux infliger des dégâts sacrés égaux à 2 × Présence à la cible jugée.",
+      "conditionText": "Uniquement si ce Jugement a bien jugé une créature — les actions déclenchées gratuites payées 1 courroux utilisent la même capacité sans juger personne, et n'ouvrent pas ce bénéfice.",
+      "once": "turn"
+    },
+    {
+      "id": "censor.judgment.order.paragon",
+      "label": "Bénéfice d'ordre — Parangon",
+      "reference": "Censor — Judgment Order Benefit",
+      "event": "abilityUsed",
+      "audience": {
+        "kind": "subject",
+        "class": "censor",
+        "subclass": "paragon"
+      },
+      "severity": "info",
+      "when": [
+        {
+          "path": "data.abilityId",
+          "op": "in",
+          "value": [
+            "judgment",
+            "jugement"
+          ]
+        }
+      ],
+      "message": "Premier Jugement du tour : tu peux faire une traction verticale de la cible jugée jusqu'à 2 × Présence cases. Verticale = tu peux l'arracher du ciel ; laissée en l'air en fin de mouvement, elle chute (2 dégâts par case, à terre).",
+      "conditionText": "Uniquement si ce Jugement a bien jugé une créature — les actions déclenchées gratuites payées 1 courroux utilisent la même capacité sans juger personne, et n'ouvrent pas ce bénéfice.",
+      "once": "turn"
+    },
+    {
+      "id": "censor.judgment.lookOnMyWork",
+      "label": "Contemple mon œuvre et désespère",
+      "reference": "Censor — Judgment Order Benefit",
+      "event": "abilityUsed",
+      "audience": {
+        "kind": "subject",
+        "class": "censor",
+        "minLevel": 3
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "data.abilityId",
+          "op": "in",
+          "value": [
+            "judgment",
+            "jugement"
+          ]
+        }
+      ],
+      "message": "Tu utilises Jugement : tu peux dépenser 1 courroux pour effrayer la cible (sauvegarde met fin) si elle a P < MOYENNE. Si elle est déjà effrayée par toi, elle subit 2 × Présence dégâts sacrés à la place.",
+      "conditionText": "Niveau 3 et plus. S'applique à chaque Jugement, pas seulement au premier du tour."
+    },
+    {
+      "id": "censor.judgment.templar",
+      "label": "Templier — effet de domaine",
+      "reference": "Censor — Judgment Order Benefit",
+      "event": "abilityUsed",
+      "audience": {
+        "kind": "subject",
+        "class": "censor",
+        "minLevel": 10
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "data.abilityId",
+          "op": "in",
+          "value": [
+            "judgment",
+            "jugement"
+          ]
+        }
+      ],
+      "message": "Tu utilises Jugement : action déclenchée gratuite pour employer un effet de domaine de conduit de ton domaine (Présence remplace Intuition, niveau de censeur remplace niveau de conduit).",
+      "conditionText": "Niveau 10."
     },
     {
       "id": "conduit.piety.storm",
@@ -563,6 +788,11 @@
         {
           "path": "data.dealtDamage",
           "op": "truthy"
+        },
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
         }
       ]
     },
@@ -593,6 +823,120 @@
       ],
       "message": "Première capacité héroïque alliée de ce round à portée ({ability} par {subject}) : +1 concentration.",
       "gain": "+1"
+    },
+    {
+      "id": "tactician.mark.benefit",
+      "label": "Bénéfice de Marque — 1 concentration",
+      "reference": "Tactician — Mark",
+      "event": "powerRollResolved",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "tactician"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "data.dealtDamage",
+          "op": "truthy"
+        },
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        }
+      ],
+      "message": "{subject} inflige des dégâts ({ability}) — tu peux dépenser 1 concentration en action déclenchée gratuite pour UN de ces bénéfices : ① dégâts supplémentaires égaux à 2 × Raison ; ② celui qui blesse dépense une Récupération ; ③ celui qui blesse se décale de Raison cases ; ④ si c'est TOI qui blesses au corps à corps, la cible est provoquée par toi jusqu'à la fin de son prochain tour.",
+      "conditionText": "Uniquement si la cible est marquée par toi. Un seul bénéfice par déclenchement — mais le déclencheur se répète à chaque instance de dégâts, sans limite par tour ni par round."
+    },
+    {
+      "id": "tactician.mark.remark",
+      "label": "Marque — cible à 0 Endurance",
+      "reference": "Tactician — Mark",
+      "event": "reducedToZero",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "tactician"
+      },
+      "severity": "decision",
+      "message": "{subject} tombe à 0 Endurance — action déclenchée gratuite pour marquer une nouvelle cible à portée 10.",
+      "conditionText": "Uniquement si {subject} était marqué par toi."
+    },
+    {
+      "id": "tactician.outOfPosition",
+      "label": "Hors de position — début de rencontre",
+      "reference": "Tactician — Out of Position",
+      "event": "encounterStart",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "tactician",
+        "minLevel": 3
+      },
+      "severity": "decision",
+      "message": "Début de rencontre — action déclenchée gratuite : Marque sur un ennemi dans ta ligne d'effet, même si tu es surpris, puis glissement de la cible jusqu'à 3 cases (ignore la stabilité).",
+      "conditionText": "Niveau 3 et plus. Le glissement ne peut ni blesser la cible, ni la laisser mourante, ni lui infliger une condition."
+    },
+    {
+      "id": "tactician.goaded",
+      "label": "Aiguillonné — redirection de frappe",
+      "reference": "Tactician — Goaded (Mastermind, niveau 2)",
+      "event": "abilityUsed",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "tactician",
+        "subclass": "mastermind"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "data.keywords",
+          "op": "includes",
+          "value": "strike"
+        },
+        {
+          "path": "subject.disposition",
+          "op": "eq",
+          "value": "hostile"
+        }
+      ],
+      "message": "{subject} utilise une frappe ({ability}) — action déclenchée gratuite pour en rediriger une cible vers toi ou un allié dans ta ligne d'effet.",
+      "conditionText": "Uniquement si {subject} est marqué par toi et vise toi ou un allié. La nouvelle cible doit être à portée de la capacité et dans la ligne d'effet de {subject}. Attention au tempo : ce signal arrive avec le jet, pas avant."
+    },
+    {
+      "id": "censor.judgment.rejudge",
+      "label": "Jugement — cible à 0 Endurance",
+      "reference": "Censor — Judgment",
+      "event": "reducedToZero",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "censor"
+      },
+      "severity": "decision",
+      "message": "{subject} tombe à 0 Endurance — action déclenchée gratuite pour juger une nouvelle cible.",
+      "conditionText": "Uniquement si {subject} était jugé par toi. Au niveau 3+, si la nouvelle cible a P < FORTE elle est effrayée (sauvegarde met fin) ; déjà effrayée, elle subit 2 × Présence dégâts sacrés. Ce nouveau Jugement rouvre le bénéfice d'ordre s'il n'a pas encore servi ce tour-ci."
+    },
+    {
+      "id": "censor.judgment.meleeTaunt",
+      "label": "Jugement — provocation au corps à corps",
+      "reference": "Censor — Judgment",
+      "event": "powerRollResolved",
+      "audience": {
+        "kind": "subject",
+        "class": "censor"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "data.dealtDamage",
+          "op": "truthy"
+        },
+        {
+          "path": "data.keywords",
+          "op": "includes",
+          "value": "melee"
+        }
+      ],
+      "message": "Tu blesses au corps à corps ({ability}) — tu peux dépenser 1 courroux en action déclenchée gratuite pour provoquer la cible jusqu'à la fin de son prochain tour.",
+      "conditionText": "Uniquement si la cible est jugée par toi. Une seule des quatre actions déclenchées à 1 courroux par déclenchement."
     },
     {
       "id": "troubadour.drama.heroWinded",
@@ -930,6 +1274,323 @@
       "message": "Première capacité à coût de Malice de la rencontre ({ability}) : +2 drame.",
       "conditionText": "Niveau 4+, événement Melodrama à retenir, et la capacité doit avoir infligé des dégâts à un héros.",
       "gain": "+2"
+    },
+    {
+      "id": "elementalist.earth.skinLikeCastleWalls",
+      "label": "Peau de Muraille",
+      "reference": "Elementalist — Skin Like Castle Walls (Terre, niveau 1)",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "elementalist",
+        "subclass": "earth"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        }
+      ],
+      "message": "{subject} subit des dégâts — action déclenchée : n'en subir que la moitié. 1 essence de plus réduit de 1 la potence d'un effet associé.",
+      "conditionText": "Portée 10, sur toi ou un allié. Ce n'est pas une capacité personnelle : elle protège à distance."
+    },
+    {
+      "id": "elementalist.fire.explosiveAssistance",
+      "label": "Assistance Explosive",
+      "reference": "Elementalist — Explosive Assistance (Feu, niveau 1)",
+      "event": "forcedMovementLikely",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "elementalist",
+        "subclass": "fire"
+      },
+      "severity": "decision",
+      "inferred": true,
+      "when": [
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        }
+      ],
+      "message": "{subject} inflige un mouvement forcé ({ability}) — action déclenchée : +Raison cases à la distance, ou +2 × Raison pour 1 essence.",
+      "conditionText": "Le déclencheur est d'INFLIGER un mouvement forcé, pas d'en subir un. Portée 10, sur toi ou un allié. Déduit : le système n'automatise pas le mouvement forcé."
+    },
+    {
+      "id": "elementalist.green.breathOfDawn",
+      "label": "Souffle de l'Aube Remémorée",
+      "reference": "Elementalist — Breath of Dawn Remembered (Vert, niveau 1)",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "elementalist",
+        "subclass": "green"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        }
+      ],
+      "message": "{subject} subit des dégâts — action déclenchée : {subject} dépense une Récupération (une de plus par essence dépensée).",
+      "conditionText": "Le même déclencheur s'ouvre aussi au DÉBUT DU TOUR de la cible — non signalé, un début de tour par héros serait trop bruyant."
+    },
+    {
+      "id": "fury.berserker.linesOfForce",
+      "label": "Lignes de Force",
+      "reference": "Fury — Lines of Force (Berserker, niveau 1)",
+      "event": "forcedMovementLikely",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "fury",
+        "subclass": "berserker"
+      },
+      "severity": "decision",
+      "inferred": true,
+      "message": "Mouvement forcé en vue ({ability}) — action déclenchée : rediriger sur une autre cible de taille égale ou inférieure. Tu deviens la source, +Might à la distance (2 × Might pour 1 férocité).",
+      "conditionText": "Le déclencheur est au conditionnel : « would be force moved ». La redirection remplace le déplacement d'origine, elle ne s'y ajoute pas. Déduit."
+    },
+    {
+      "id": "fury.reaver.unearthlyReflexes",
+      "label": "Réflexes Surnaturels",
+      "reference": "Fury — Unearthly Reflexes (Reaver, niveau 1)",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "subject",
+        "class": "fury",
+        "subclass": "reaver"
+      },
+      "severity": "decision",
+      "message": "Tu subis des dégâts — action déclenchée : moitié des dégâts, et tu peux te décaler de Agilité cases. 1 férocité réduit de 1 la potence associée.",
+      "conditionText": "Se résout sur les dégâts eux-mêmes."
+    },
+    {
+      "id": "fury.stormwight.furiousChange",
+      "label": "Changement Furieux",
+      "reference": "Fury — Furious Change (Stormwight, niveau 1)",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "subject",
+        "class": "fury",
+        "subclass": "stormwight"
+      },
+      "severity": "decision",
+      "message": "Tu perds de l'Endurance — action déclenchée : Endurance temporaire égale à Might, et tu peux passer en forme animale ou hybride. 1 férocité : dépenser une Récupération.",
+      "conditionText": "Uniquement si tu n'es pas mourant."
+    },
+    {
+      "id": "null.inertialShield",
+      "label": "Bouclier d'Inertie",
+      "reference": "Null — Inertial Shield (niveau 1)",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "subject",
+        "class": "null"
+      },
+      "severity": "decision",
+      "message": "Tu subis des dégâts — action déclenchée : moitié des dégâts. 1 discipline réduit de 1 la potence d'UN effet associé, pour toi seulement.",
+      "conditionText": "Selon ta tradition, cette capacité ouvre en plus une action déclenchée gratuite : Désengagement (chronokinétique), Prise (cryokinétique), Bousculade (métakinétique)."
+    },
+    {
+      "id": "null.reorder",
+      "label": "Réordonner",
+      "reference": "Null — Reorder (niveau 3)",
+      "event": "turnStart",
+      "audience": {
+        "kind": "subject",
+        "class": "null",
+        "minLevel": 3
+      },
+      "severity": "decision",
+      "message": "Début de ton tour — action déclenchée gratuite : mettre fin à un effet sur toi qui se termine par une sauvegarde ou à la fin de ton tour.",
+      "conditionText": "Niveau 3 et plus. Tu peux l'offrir à une créature de ton Champ Nul plutôt qu'à toi."
+    },
+    {
+      "id": "shadow.blackAsh.inAllThisConfusion",
+      "label": "Dans Toute Cette Confusion",
+      "reference": "Shadow — In All This Confusion (Cendre Noire, niveau 1)",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "subject",
+        "class": "shadow",
+        "subclass": "black-ash"
+      },
+      "severity": "decision",
+      "message": "Tu subis des dégâts — action déclenchée : moitié des dégâts, puis téléportation de 4 cases (+1 par perspicacité dépensée).",
+      "conditionText": "N'importe quelle source de dégâts, y compris une chute ou un terrain. La téléportation a lieu APRÈS résolution de l'effet déclencheur."
+    },
+    {
+      "id": "shadow.causticAlchemy.defensiveRoll",
+      "label": "Roulade Défensive",
+      "reference": "Shadow — Defensive Roll (Alchimie Caustique, niveau 1)",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "subject",
+        "class": "shadow",
+        "subclass": "caustic-alchemy"
+      },
+      "severity": "decision",
+      "message": "Tu subis des dégâts — action déclenchée : moitié des dégâts, décalage de 2 cases (5 au niveau 5+, verticalement possible) et tu peux te cacher. 1 perspicacité : potence −1.",
+      "conditionText": "Uniquement si les dégâts viennent d'une AUTRE CRÉATURE — contrairement à Dans Toute Cette Confusion, une chute ne déclenche pas."
+    },
+    {
+      "id": "shadow.hesitationIsWeakness",
+      "label": "L'Hésitation Est une Faiblesse",
+      "reference": "Shadow — Hesitation Is Weakness (niveau 1)",
+      "event": "turnEnd",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "shadow"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        }
+      ],
+      "message": "{subject} termine son tour — action déclenchée gratuite, 1 perspicacité : tu prends ton tour immédiatement après.",
+      "conditionText": "Uniquement si {subject} est un autre héros, et s'il n'a pas lui-même utilisé cette capacité pour commencer son tour."
+    },
+    {
+      "id": "shadow.nightWatch",
+      "label": "Veille de Nuit",
+      "reference": "Shadow — Night Watch (niveau 4)",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "shadow",
+        "minLevel": 4
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        }
+      ],
+      "message": "{subject} subit des dégâts — action déclenchée : {subject} n'en subit que la moitié, et tu restes caché.",
+      "conditionText": "Niveau 4 et plus. Portée 5, sur un ALLIÉ, et uniquement pendant que tu es caché."
+    },
+    {
+      "id": "tactician.insurgent.advancedTactics",
+      "label": "Tactiques Avancées",
+      "reference": "Tactician — Advanced Tactics (Insurgent, niveau 1)",
+      "event": "powerRollResolved",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "tactician",
+        "subclass": "insurgent"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "data.dealtDamage",
+          "op": "truthy"
+        },
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        }
+      ],
+      "message": "{subject} inflige des dégâts ({ability}) — action déclenchée : {subject} gagne 2 élans, utilisables SUR CES DÉGÂTS. 1 concentration augmente de 1 la potence associée.",
+      "conditionText": "Portée 10, sur un allié. Déclencheur offensif, pas défensif : la cible est l'allié qui blesse."
+    },
+    {
+      "id": "tactician.vanguard.parry",
+      "label": "Parade",
+      "reference": "Tactician — Parry (Vanguard, niveau 1)",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "tactician",
+        "subclass": "vanguard"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        }
+      ],
+      "message": "{subject} subit des dégâts — action déclenchée : tu te décales d'1 case ; si {subject} c'est toi, ou si tu finis adjacent à {subject}, il n'en subit que la moitié et la potence associée baisse de 1.",
+      "conditionText": "Portée Melee 2. 1 concentration porte la distance à Melee 1 + Raison et le décalage à Raison cases."
+    },
+    {
+      "id": "tactician.vanguard.meleeSuperiority",
+      "label": "Supériorité au Corps à Corps",
+      "reference": "Tactician — Melee Superiority (Vanguard, niveau 2)",
+      "event": "turnStart",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "tactician",
+        "subclass": "vanguard"
+      },
+      "severity": "info",
+      "when": [
+        {
+          "path": "subject.disposition",
+          "op": "eq",
+          "value": "hostile"
+        }
+      ],
+      "message": "Tour de {subject} — rappel : s'il est marqué par toi et tente de bouger ou de se décaler à portée de ta frappe gratuite, tu peux dépenser 2 concentration pour frapper le premier.",
+      "conditionText": "Le déplacement n'est pas observable ; ce signal est un rappel en début de tour ennemi, pas une détection. Se résout AVANT le mouvement (« attempts to »). Désactive si le bruit te gêne."
+    },
+    {
+      "id": "troubadour.duelist.riposte",
+      "label": "Riposte",
+      "reference": "Troubadour — Riposte (Duelist, niveau 1)",
+      "event": "damageTaken",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "troubadour",
+        "subclass": "duelist"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        }
+      ],
+      "message": "{subject} subit des dégâts — action déclenchée gratuite en coût : {subject} fait une frappe gratuite contre l'agresseur.",
+      "conditionText": "Uniquement si les dégâts viennent d'une FRAPPE DE MÊLÉE — le module ne peut pas le vérifier. Portée Melee 1, sur toi ou un allié adjacent."
+    },
+    {
+      "id": "troubadour.virtuoso.harmonize",
+      "label": "Harmoniser",
+      "reference": "Troubadour — Harmonize (Virtuoso, niveau 1)",
+      "event": "abilityUsed",
+      "audience": {
+        "kind": "allHeroes",
+        "class": "troubadour",
+        "subclass": "virtuoso"
+      },
+      "severity": "decision",
+      "when": [
+        {
+          "path": "subject.type",
+          "op": "eq",
+          "value": "hero"
+        },
+        {
+          "path": "data.resourceCost",
+          "op": "lte",
+          "value": 3
+        }
+      ],
+      "message": "{subject} utilise {ability} — action déclenchée, 3 drames : {subject} ajoute une cible ; les dégâts infligés à cette cible supplémentaire deviennent soniques.",
+      "conditionText": "Portée 5, sur un allié. Uniquement si la capacité ne vise QU'UN SEUL ennemi et coûte 3 ressources ou moins ; chaque drame supplémentaire relève ce plafond de 1."
     }
   ]
 }

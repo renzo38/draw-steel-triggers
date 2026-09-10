@@ -25,10 +25,42 @@ export default class Ledger {
   #dirty = false;
 
   /**
-   * @param {object} [state]  Previously persisted state.
+   * @param {object} [state]  Previously persisted state, in either shape.
    */
   constructor(state = {}) {
-    this.#state = foundryDeepClone(state);
+    this.#state = Ledger.#parse(state);
+  }
+
+  /* -------------------------------------------------- */
+
+  /**
+   * Read either persistence shape.
+   *
+   * The records array is the current one. The legacy shape was a plain object
+   * keyed by `entryId::actorUuid` — which cannot survive a Foundry flag: keys
+   * contain dots (`fury.berserker.push`), and `setFlag` runs the value through
+   * `expandObject`, which turns every dotted key into a nested tree. The stored
+   * flag came back as `{fury: {berserker: {…}}}`, no key matched anything, and
+   * every "first time" window silently reopened on each reload. Legacy data is
+   * therefore not migrated — it is dropped, because it is already meaningless.
+   *
+   * @param {object} state
+   * @returns {Record<string, {encounterId: string, round: number, turnKey: string}>}
+   */
+  static #parse(state) {
+    if (Array.isArray(state?.records)) {
+      const out = {};
+      for (const record of state.records) {
+        if (typeof record?.key !== "string") continue;
+        out[record.key] = {
+          encounterId: record.encounterId,
+          round: record.round,
+          turnKey: record.turnKey,
+        };
+      }
+      return out;
+    }
+    return {};
   }
 
   /* -------------------------------------------------- */
@@ -38,9 +70,17 @@ export default class Ledger {
     return this.#dirty;
   }
 
-  /** The serialisable state. */
+  /**
+   * The serialisable state.
+   *
+   * An array, not an object keyed by the claim key: Foundry expands dotted keys
+   * inside a flag value, and every claim key contains an entry id like
+   * `fury.berserker.push`. Arrays are left alone by that expansion.
+   */
   toJSON() {
-    return foundryDeepClone(this.#state);
+    return {
+      records: Object.entries(this.#state).map(([key, record]) => ({ key, ...record })),
+    };
   }
 
   /** Mark the current state as persisted. */

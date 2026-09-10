@@ -98,14 +98,37 @@ function routeLocally(notifications, { asDirector }) {
   }
 
   const style = game.settings.get(MODULE_ID, SETTINGS.notifyStyle);
-  WatchPanel.record(notifications);
-  if (style === "panelOnly") return;
+  const debug = game.settings.get(MODULE_ID, SETTINGS.debug);
+
+  // Recording must never be able to swallow the display. These are two
+  // independent jobs and a failure in the journal is no reason for the player to
+  // lose their prompt.
+  try {
+    WatchPanel.record(notifications);
+  } catch (error) {
+    console.error(`${MODULE_ID} | le journal a refusé l'enregistrement`, error);
+  }
+
+  if (style === "panelOnly") {
+    if (debug) console.debug(`${MODULE_ID} | style « journal seul » : aucun affichage`);
+    return;
+  }
 
   for (const notification of notifications) {
-    if (notification.severity === "decision" && style === "adaptive") {
-      DecisionDialog.present(notification);
-    } else {
-      showToast(notification);
+    const modal = notification.severity === "decision" && style === "adaptive";
+    if (debug) {
+      console.debug(
+        `${MODULE_ID} | affichage « ${notification.entryId} » pour ${notification.recipientName}`,
+        { sévérité: notification.severity, style, voie: modal ? "modale" : "bulle", directeur: asDirector },
+      );
+    }
+    // One notification that fails to render must not take the rest of the batch
+    // down with it — a knockback commonly produces three at once.
+    try {
+      if (modal) DecisionDialog.present(notification);
+      else showToast(notification);
+    } catch (error) {
+      console.error(`${MODULE_ID} | échec d'affichage de « ${notification.entryId} »`, error);
     }
   }
 }

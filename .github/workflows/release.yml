@@ -1,0 +1,51 @@
+name: Release
+
+# Publishing is driven by tags: `git tag v0.2.1 && git push --tags` builds the
+# archive, stamps the manifest with that version, and attaches both to a GitHub
+# Release. The `releases/latest/download/module.json` URL that Foundry installs
+# from then resolves on its own — no URL to update by hand, ever.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # A broken build must never reach a release. The suite needs no
+      # dependencies, so this costs a couple of seconds.
+      - name: Tests
+        run: node test/engine.test.mjs
+
+      - name: Version from tag
+        id: version
+        run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp the manifest
+        run: node tools/stamp-manifest.mjs "${{ steps.version.outputs.value }}" "${{ github.repository }}"
+
+      # Foundry unpacks this archive straight into modules/<id>/, so its
+      # contents sit at the root — no wrapping folder. Tests and CI files are
+      # left out: they are of no use inside a running Foundry.
+      - name: Build module.zip
+        run: zip -r module.zip module.json scripts templates styles lang README.md
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: v${{ steps.version.outputs.value }}
+          files: |
+            module.json
+            module.zip
+          generate_release_notes: true

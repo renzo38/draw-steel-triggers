@@ -38,14 +38,62 @@ let emit = () => {};
 export const RESULT_PART_TYPES = Object.freeze(["abilityResult", "targetResult"]);
 
 export const TRIGGER_KEYWORDS = Object.freeze({
-  [EVENTS.damageTaken]: ["take damage", "takes damage", "damaged by", "subit des dégâts", "subissez des dégâts", "dégâts d'une"],
+  // "You take damage" (Unearthly Reflexes, Inertial Shield, In All This
+  // Confusion), "Another creature damages you" (Defensive Roll), "A creature
+  // deals damage to the target" (Parry), "The target deals damage to an ally"
+  // (Feedback Loop, No Dying on My Watch), "The target takes damage from a melee
+  // strike" (Riposte), "You lose Stamina" (Furious Change). Six phrasings for
+  // one event; only the first two were listed before.
+  [EVENTS.damageTaken]: [
+    "take damage", "takes damage", "taking damage", "damaged by", "damages you",
+    "deals damage", "deal damage", "lose stamina", "loses stamina",
+    "subit des dégâts", "subissez des dégâts", "dégâts d'une", "inflige des dégâts",
+    "te blesse", "perds de l'endurance",
+  ],
   [EVENTS.becameWinded]: ["winded", "essouffl"],
-  [EVENTS.becameDying]: ["dying", "mourant"],
-  [EVENTS.conditionApplied]: ["condition", "is subjected", "est soumis"],
-  [EVENTS.abilityUsed]: ["uses an ability", "uses a main action", "utilise une capacité", "utilise une action"],
-  [EVENTS.forcedMovementLikely]: ["force moved", "is pushed", "mu de force", "poussé"],
+  [EVENTS.becameDying]: ["dying", "mourant", "dies", "died", "meurt"],
+  // "The target is reduced to 0 Stamina" (Mark, Judgment), "You reduce a
+  // creature to 0 Stamina with a strike" (Death Strike), "The target dies"
+  // (Word of Final Redemption). Absent entirely before this audit.
+  [EVENTS.reducedToZero]: [
+    "reduced to 0 stamina", "reduce a creature to 0", "is killed", "dies",
+    "réduite à 0", "tombe à 0", "meurt",
+  ],
+  [EVENTS.conditionApplied]: [
+    "condition", "is subjected", "est soumis", "gains a condition", "save ends",
+  ],
+  [EVENTS.abilityUsed]: [
+    "uses an ability", "uses a main action", "uses a strike", "make a strike",
+    "makes a strike", "targets you", "targets an ally", "uses a heroic ability",
+    "utilise une capacité", "utilise une action", "te cible", "vise un allié",
+  ],
+  // "The target makes an ability roll" (Again, Turnabout Is Fair Play, Word of
+  // Guidance), "makes a power roll" (Prophecy, Judgment's bane, Blessing and a
+  // Curse). This whole family was unreachable before.
+  [EVENTS.powerRollResolved]: [
+    "power roll", "ability roll", "jet de puissance", "jet de capacité",
+  ],
+  [EVENTS.forcedMovementLikely]: [
+    "force moved", "is pushed", "force moves", "forced movement",
+    "mu de force", "poussé", "déplacement forcé",
+  ],
+  // "whenever you allow another creature to spend a Recovery" (The Lists of
+  // Heaven), "Whenever a hero spends their last Recovery" (Melodrama).
+  // Bare "recovery" rather than "spends a recovery": the real phrasings include
+  // "spends their last Recovery" (Melodrama) and "allow another creature to
+  // spend a Recovery" (The Lists of Heaven). A trigger line is one sentence, so
+  // the looser match costs at most one extra glance — the trade this whole
+  // mechanism is built on.
+  [EVENTS.healed]: [
+    "recovery", "regains stamina", "regain stamina",
+    "récupération", "regagne de l'endurance",
+  ],
   [EVENTS.turnEnd]: ["ends their turn", "termine son tour", "finit son tour"],
   [EVENTS.turnStart]: ["starts their turn", "commence son tour", "débute son tour"],
+  [EVENTS.encounterStart]: [
+    "start of an encounter", "combat begins", "start of a combat",
+    "début d'une rencontre", "début du combat",
+  ],
 });
 
 /* -------------------------------------------------- */
@@ -430,6 +478,13 @@ function onCreateChatMessage(message) {
         data: {
           abilityUuid: ability.uuid,
           abilityName: ability.name,
+          // The Draw Steel identifier, not the display name: a catalogue entry
+          // that keys on a specific ability must survive translation and
+          // renaming. `dsid` falls back to a slug of the name when the content
+          // pack sets no explicit `_dsid`, so a French sheet can yield
+          // « jugement » where an English one yields « judgment » — entries that
+          // target a named ability must accept both.
+          abilityId: ability.dsid ?? null,
           abilityType: system.type,
           keywords: [...(system.keywords ?? [])],
           resourceCost: system.resource ?? 0,
@@ -530,7 +585,13 @@ function emitAbilityResult(ability, tiers, targets, subject, origin) {
   const data = {
     abilityUuid: ability.uuid,
     abilityName: ability.name,
+    abilityId: ability.dsid ?? null,
     abilityType: system.type,
+    // Carried on the result too, not just on `abilityUsed`: several triggered
+    // actions fire on the damage rather than on the declaration ("if you damage
+    // a judged creature with a melee ability"), so the keyword has to survive
+    // to this event.
+    keywords: [...(system.keywords ?? [])],
     tier: Math.max(...tiers),
     tiers,
     dealtDamage,

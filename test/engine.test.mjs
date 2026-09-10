@@ -13,10 +13,11 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 import Ledger from "../scripts/engine/ledger.mjs";
-import { RESULT_PART_TYPES, collectTierOutcomes } from "../scripts/engine/observers.mjs";
+import { RESULT_PART_TYPES, TRIGGER_KEYWORDS, collectTierOutcomes } from "../scripts/engine/observers.mjs";
 import { runTemplateTests } from "./templates.test.mjs";
 import { evaluateConditions, interpolate, matchEvent, readPath, resolveAudience } from "../scripts/engine/matcher.mjs";
 import { validateCatalog, validateEntry } from "../scripts/catalog/catalog-validation.mjs";
+import { EVENTS } from "../scripts/constants.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -110,6 +111,43 @@ test("state round-trips through serialisation", () => {
   assert.equal(revived.claim("k", "round", ctx()), false, "a reload lost the window");
 });
 
+test("l'état persisté survit à l'expansion des clés pointées par Foundry", () => {
+  // LE bug du 10 septembre. `setFlag` fait passer la valeur par `expandObject`,
+  // qui transforme toute clé contenant un point en arborescence. Les clés du
+  // registre valent « fury.berserker.push::Actor.xxx » : le flag revenait sous la
+  // forme { fury: { berserker: … } }, plus aucune clé ne correspondait, et chaque
+  // fenêtre « première fois » se rouvrait à chaque rechargement. Silencieusement.
+  const expandObject = (obj) => {
+    const out = {};
+    for (let [k, v] of Object.entries(obj)) {
+      if (v && typeof v === "object" && !Array.isArray(v)) v = expandObject(v);
+      let node = out;
+      const path = k.split(".");
+      while (path.length > 1) node = node[path.shift()] ??= {};
+      node[path[0]] = v;
+    }
+    return out;
+  };
+
+  const ledger = new Ledger();
+  const key = Ledger.key("fury.berserker.push", "Actor.Tavik");
+  assert.equal(ledger.claim(key, "turn", ctx()), true);
+
+  const throughFoundry = expandObject(ledger.toJSON());
+  assert.ok(Array.isArray(throughFoundry.records), "l'expansion a éclaté la structure");
+
+  const revived = new Ledger(throughFoundry);
+  assert.equal(revived.claim(key, "turn", ctx()), false,
+    "la fenêtre s'est rouverte après un aller-retour par un flag Foundry");
+});
+
+test("un registre hérité au format éclaté est écarté plutôt que mal lu", () => {
+  const corrupt = { fury: { berserker: { "push::Actor": { Tavik: { turnKey: "1:0" } } } } };
+  const ledger = new Ledger(corrupt);
+  assert.equal(ledger.size, 0);
+  assert.equal(ledger.claim(Ledger.key("fury.berserker.push", "Actor.Tavik"), "turn", ctx()), true);
+});
+
 test("pruning drops records from other encounters only", () => {
   const ledger = new Ledger();
   ledger.claim("old", "encounter", ctx({ encounterId: "c0" }));
@@ -192,6 +230,32 @@ test("matchEvent consumes the window so a repeat is silent", () => {
   assert.equal(matchEvent(entries, event, heroes, ledger, ctx({ round: 2 })).length, 1);
 });
 
+test("une fenêtre déjà consommée est signalée, pas avalée en silence", () => {
+  // Trouvé le 10 septembre en débogage : deux entrées sur le MÊME événement
+  // produisaient des bulles, une troisième non — parce que sa fenêtre « une fois
+  // par tour » était déjà prise. Rien nulle part ne le disait, ce qui rend une
+  // entrée qui marche indiscernable d'une entrée cassée.
+  const entries = [{
+    id: "fury.berserker.push",
+    label: "Poussée",
+    event: "forcedMovementLikely",
+    audience: { kind: "subject", class: "fury" },
+    once: "turn",
+    message: "+1 élan",
+  }];
+  const event = { type: "forcedMovementLikely", subject: {}, data: {} };
+  const heroes = [hero("Tavik", { isSubject: true, classId: "fury" })];
+  const ledger = new Ledger();
+  const suppressed = [];
+  const opts = { onSuppressed: (info) => suppressed.push(info) };
+
+  assert.equal(matchEvent(entries, event, heroes, ledger, ctx(), opts).length, 1);
+  assert.deepEqual(suppressed, [], "rien ne doit être signalé au premier passage");
+
+  assert.equal(matchEvent(entries, event, heroes, ledger, ctx(), opts).length, 0);
+  assert.deepEqual(suppressed, [{ entryId: "fury.berserker.push", recipientName: "Tavik", scope: "turn" }]);
+});
+
 test("a disabled entry never fires", () => {
   const entries = [{ id: "x", event: "damageTaken", message: "m", audience: { kind: "subject" } }];
   const event = { type: "damageTaken", subject: { actorUuid: "Actor.Tavik" }, data: {} };
@@ -221,6 +285,17 @@ console.log("\nGrowing Ferocity — seuils et types de mouvement");
 const fire = (event, recipient, ledger = new Ledger(), context = ctx()) =>
   matchEvent(shipped.entries, event, [recipient], ledger, context).map((n) => n.entryId);
 
+/**
+ * Growing Ferocity ids only.
+ *
+ * The same forced-movement event legitimately also matches an aspect's level-1
+ * triggered action (Lines of Force, for the berserker). Asserting on the whole
+ * match list made these tests fail the moment an unrelated — and correct —
+ * entry was added, which is a test bug, not a catalogue bug.
+ */
+const fireGrowing = (...args) =>
+  fire(...args).filter((id) => /\.(push|slide|grab|prone)$/.test(id));
+
 const pushEvent = (peak, movementTypes = ["push"]) => ({
   type: "forcedMovementLikely",
   subject: { actorUuid: "Actor.Tavik", name: "Tavik", resourcePeakThisTurn: peak },
@@ -230,12 +305,12 @@ const pushEvent = (peak, movementTypes = ["push"]) => ({
 
 test("le bénéfice à 4 de férocité ne se déclenche pas en dessous du seuil", () => {
   const berserker = hero("Tavik", { isSubject: true, subclassId: "berserker" });
-  assert.deepEqual(fire(pushEvent(3), berserker), []);
+  assert.deepEqual(fireGrowing(pushEvent(3), berserker), []);
 });
 
 test("il se déclenche à 4 pile", () => {
   const berserker = hero("Tavik", { isSubject: true, subclassId: "berserker" });
-  assert.deepEqual(fire(pushEvent(4), berserker), ["fury.berserker.push"]);
+  assert.deepEqual(fireGrowing(pushEvent(4), berserker), ["fury.berserker.push"]);
 });
 
 test("le pic du tour compte, pas la valeur courante après dépense", () => {
@@ -244,24 +319,24 @@ test("le pic du tour compte, pas la valeur courante après dépense", () => {
   const berserker = hero("Tavik", { isSubject: true, subclassId: "berserker" });
   const event = pushEvent(5);
   event.subject.resourceValue = 2;
-  assert.deepEqual(fire(event, berserker), ["fury.berserker.push"]);
+  assert.deepEqual(fireGrowing(event, berserker), ["fury.berserker.push"]);
 });
 
 test("le berserker ne gagne rien sur un simple glissement", () => {
   const berserker = hero("Tavik", { isSubject: true, subclassId: "berserker" });
-  assert.deepEqual(fire(pushEvent(6, ["slide"]), berserker), []);
+  assert.deepEqual(fireGrowing(pushEvent(6, ["slide"]), berserker), []);
 });
 
 test("le reaver compte le glissement, pas la poussée (table Reaver)", () => {
   const reaver = hero("Tavik", { isSubject: true, subclassId: "reaver" });
-  assert.deepEqual(fire(pushEvent(6, ["slide"]), reaver), ["fury.reaver.slide"]);
+  assert.deepEqual(fireGrowing(pushEvent(6, ["slide"]), reaver), ["fury.reaver.slide"]);
 });
 
 test("un aspect ne déclenche pas la table d'un autre", () => {
   const reaver = hero("Tavik", { isSubject: true, subclassId: "reaver" });
   // Une poussée nourrit le berserker et le vuken, jamais le reaver, dont la
   // table récompense le glissement.
-  assert.deepEqual(fire(pushEvent(10), reaver), []);
+  assert.deepEqual(fireGrowing(pushEvent(10), reaver), []);
 });
 
 test("la mise à terre relève du kit Vuken, donc du stormwight", () => {
@@ -277,9 +352,15 @@ test("la mise à terre relève du kit Vuken, donc du stormwight", () => {
 test("le bénéfice ne se déclenche qu'une fois par tour, et repart au tour suivant", () => {
   const berserker = hero("Tavik", { isSubject: true, subclassId: "berserker" });
   const ledger = new Ledger();
-  assert.deepEqual(fire(pushEvent(4), berserker, ledger, ctx({ turnKey: "1:0" })), ["fury.berserker.push"]);
-  assert.deepEqual(fire(pushEvent(4), berserker, ledger, ctx({ turnKey: "1:0" })), []);
-  assert.deepEqual(fire(pushEvent(4), berserker, ledger, ctx({ turnKey: "1:1" })), ["fury.berserker.push"]);
+  assert.deepEqual(fireGrowing(pushEvent(4), berserker, ledger, ctx({ turnKey: "1:0" })), ["fury.berserker.push"]);
+  assert.deepEqual(fireGrowing(pushEvent(4), berserker, ledger, ctx({ turnKey: "1:0" })), []);
+  assert.deepEqual(fireGrowing(pushEvent(4), berserker, ledger, ctx({ turnKey: "1:1" })), ["fury.berserker.push"]);
+  // Lignes de Force, elle, n'a aucune fenêtre : elle reste disponible au second
+  // mouvement forcé du même tour. C'est la distinction que le registre existe
+  // pour porter.
+  assert.ok(
+    fire(pushEvent(4), berserker, ledger, ctx({ turnKey: "1:0" })).includes("fury.berserker.linesOfForce"),
+  );
 });
 
 /* -------------------------------------------------- */
@@ -353,6 +434,167 @@ test("les douze domaines du conduit sont couverts", () => {
   for (const key of expected) assert.ok(present.has(key), `domaine « ${key} » absent`);
 });
 
+test("les trois ordres du censeur ont leur bénéfice de Jugement", () => {
+  // Trouvé manquant le 8 septembre : le Judgment Order Benefit n'était couvert
+  // pour aucun ordre. Chaque ordre a un bénéfice DIFFÉRENT — exorciste
+  // téléportation, oracle dégâts, parangon traction verticale — donc une entrée
+  // sans filtre de sous-classe annoncerait le mauvais effet à deux censeurs sur
+  // trois. C'est exactement l'erreur commise sur Growing Ferocity.
+  const expected = {
+    exorcist: /téléporter/i,
+    oracle: /dégâts sacrés/i,
+    paragon: /traction verticale/i,
+  };
+  for (const [order, shape] of Object.entries(expected)) {
+    const entry = shipped.entries.find((e) => e.id === `censor.judgment.order.${order}`);
+    assert.ok(entry, `bénéfice d'ordre « ${order} » absent`);
+    assert.equal(entry.audience.subclass, order, `« ${order} » sans filtre de sous-classe`);
+    assert.equal(entry.once, "turn", `« ${order} » devrait être limité au premier Jugement du tour`);
+    assert.ok(shape.test(entry.message), `« ${order} » n'annonce pas le bon bénéfice`);
+  }
+});
+
+test("un bénéfice d'ordre ne se déclenche pas pour un autre ordre", () => {
+  const paragon = shipped.entries.find((e) => e.id === "censor.judgment.order.paragon");
+  const event = {
+    type: "abilityUsed",
+    subject: { classId: "censor", subclassId: "oracle" },
+    data: { abilityId: "judgment" },
+  };
+  const heroes = [
+    { actorUuid: "A", name: "Oracle", classId: "censor", subclassId: "oracle", ownerIds: [], distance: 0, isSubject: true },
+  ];
+  assert.equal(resolveAudience(paragon, heroes, event).length, 0);
+});
+
+test("les entrées de Jugement acceptent le nom traduit de la capacité", () => {
+  // `dsid` se replie sur un slug du nom quand le pack de contenu ne fixe pas
+  // « _dsid » : une fiche française rend « jugement », une anglaise « judgment ».
+  // Ne reconnaître qu'une seule des deux ferait taire la moitié des tables.
+  const ids = ["censor.judgment.order.paragon", "censor.judgment.lookOnMyWork"];
+  for (const id of ids) {
+    const entry = shipped.entries.find((e) => e.id === id);
+    const clause = (entry.when ?? []).find((c) => c.path === "data.abilityId");
+    assert.ok(clause, `« ${id} » ne filtre pas sur l'identifiant de capacité`);
+    for (const spelling of ["judgment", "jugement"]) {
+      assert.ok(clause.value.includes(spelling), `« ${id} » ignore « ${spelling} »`);
+    }
+  }
+});
+
+test("toute garde de niveau passe par l'audience, jamais par une clause", () => {
+  // Deux façons d'exprimer la même chose, dont une qui casse en silence sur les
+  // événements sans sujet, est un piège. `minLevel` est la seule retenue.
+  const expected = {
+    "censor.judgment.lookOnMyWork": 3,
+    "censor.judgment.templar": 10,
+    "tactician.outOfPosition": 3,
+    "talent.mindRecovery": 4,
+  };
+  for (const [id, level] of Object.entries(expected)) {
+    const entry = shipped.entries.find((e) => e.id === id);
+    assert.ok(entry, `« ${id} » absent`);
+    assert.equal(entry.audience.minLevel, level, `« ${id} » : mauvaise garde de niveau`);
+  }
+  for (const entry of shipped.entries) {
+    assert.ok(
+      !(entry.when ?? []).some((c) => c.path === "subject.level"),
+      `« ${entry.id} » borne le niveau dans « when » au lieu de l'audience`,
+    );
+  }
+});
+
+test("les trois traditions du talent ont leur action déclenchée de niveau 1", () => {
+  // Troisième table par sous-classe du même genre, après les ordres du censeur et
+  // les aspects du fury : chaque tradition a UNE action déclenchée de niveau 1,
+  // et les trois font des choses sans rapport.
+  const expected = {
+    telepathy: "talent.telepathy.feedbackLoop",
+    chronopathy: "talent.chronopathy.again",
+    telekinesis: "talent.telekinesis.repel",
+  };
+  for (const [tradition, id] of Object.entries(expected)) {
+    const entry = shipped.entries.find((e) => e.id === id);
+    assert.ok(entry, `« ${id} » absent`);
+    assert.equal(entry.audience.subclass, tradition, `« ${id} » sans filtre de tradition`);
+    assert.equal(entry.severity, "decision");
+  }
+});
+
+test("les dégâts de tension annoncent leurs deux échappatoires de haut niveau", () => {
+  const entry = shipped.entries.find((e) => e.id === "talent.strained.endOfTurn");
+  assert.match(entry.conditionText, /Cascading Strain/);
+  assert.match(entry.conditionText, /Psion/);
+});
+
+test("le bénéfice de Marque du tacticien n'est pas limité par tour ni par round", () => {
+  // Le gain de concentration est « la première fois par round » ; le bénéfice de
+  // Marque, lui, se redéclenche à CHAQUE instance de dégâts. Coder le second
+  // comme le premier ferait taire le module dès la deuxième frappe du round —
+  // exactement l'inverse de ce qu'un tacticien attend.
+  const gain = shipped.entries.find((e) => e.id === "tactician.focus.markedDamaged");
+  const benefit = shipped.entries.find((e) => e.id === "tactician.mark.benefit");
+  assert.equal(gain.once, "round");
+  assert.equal(benefit.once, undefined, "le bénéfice de Marque ne doit porter aucune fenêtre");
+  assert.equal(benefit.severity, "decision");
+});
+
+test("un ennemi qui blesse une cible marquée ne donne pas de concentration", () => {
+  // « you or any ally damages a creature marked by you » : le sujet doit être un
+  // héros. Sans cette garde, un monstre frappant une créature marquée déclenchait
+  // le gain.
+  for (const id of ["tactician.focus.markedDamaged", "tactician.mark.benefit"]) {
+    const entry = shipped.entries.find((e) => e.id === id);
+    const clause = (entry.when ?? []).find((c) => c.path === "subject.type");
+    assert.ok(clause, `« ${id} » ne vérifie pas que le sujet est un héros`);
+    assert.equal(clause.value, "hero");
+  }
+});
+
+test("une garde de niveau sur un événement sans sujet passe par l'audience", () => {
+  // `encounterStart` porte subject: null. Une clause « subject.level » ne s'y
+  // évaluerait jamais — l'entrée serait morte sans que rien ne le signale.
+  const entry = shipped.entries.find((e) => e.id === "tactician.outOfPosition");
+  assert.equal(entry.event, "encounterStart");
+  assert.equal(entry.audience.minLevel, 3);
+  assert.ok(
+    !(entry.when ?? []).some((c) => c.path.startsWith("subject.")),
+    "aucune clause ne doit dépendre du sujet sur un événement sans sujet",
+  );
+});
+
+test("le filtre minLevel écarte les héros trop bas et ceux sans niveau lisible", () => {
+  const entry = { audience: { kind: "allHeroes", class: "tactician", minLevel: 3 } };
+  const heroes = [
+    { actorUuid: "A", name: "Novice", classId: "tactician", level: 2, ownerIds: [], distance: 0, isSubject: false },
+    { actorUuid: "B", name: "Vétéran", classId: "tactician", level: 3, ownerIds: [], distance: 0, isSubject: false },
+    { actorUuid: "C", name: "Illisible", classId: "tactician", level: null, ownerIds: [], distance: 0, isSubject: false },
+  ];
+  assert.deepEqual(resolveAudience(entry, heroes).map((h) => h.name), ["Vétéran"]);
+});
+
+test("les déclencheurs sur cible à 0 Endurance sont couverts pour les deux classes", () => {
+  // L'événement `reducedToZero` existe : le rejugement du censeur et le
+  // remarquage du tacticien sont donc détectables, contrairement à ce que
+  // j'avais d'abord annoncé.
+  for (const id of ["censor.judgment.rejudge", "tactician.mark.remark"]) {
+    const entry = shipped.entries.find((e) => e.id === id);
+    assert.ok(entry, `« ${id} » absent`);
+    assert.equal(entry.event, "reducedToZero");
+    assert.equal(entry.severity, "decision");
+  }
+});
+
+test("les entrées qui filtrent sur un mot-clé visent un événement qui en porte", () => {
+  // `powerRollResolved` ne transportait pas `keywords` : une entrée filtrant sur
+  // « melee » ne se serait jamais déclenchée, sans erreur ni trace.
+  const carriers = new Set(["abilityUsed", "powerRollResolved", "forcedMovementLikely"]);
+  for (const entry of shipped.entries) {
+    if (!(entry.when ?? []).some((c) => c.path === "data.keywords")) continue;
+    assert.ok(carriers.has(entry.event), `« ${entry.id} » filtre des mots-clés sur « ${entry.event} », qui n'en porte pas`);
+  }
+});
+
 test("seuls le fury et le null portent des entrées à seuil de ressource", () => {
   // Les sept autres classes n'ont aucune table de seuil : une entrée qui en
   // suppose une serait une invention.
@@ -413,6 +655,52 @@ test("la maîtrise du null respecte la tradition et le seuil", () => {
 });
 
 /* -------------------------------------------------- */
+
+/* -------------------------------------------------- */
+
+console.log("\nTable de mots-clés — capacités déclenchées choisies");
+
+/** Le scan de prose, reproduit sans Foundry. */
+const scan = (trigger, eventType) =>
+  (TRIGGER_KEYWORDS[eventType] ?? []).some((k) => trigger.toLowerCase().includes(k));
+
+test("les formulations réelles des neuf classes sont reconnues", () => {
+  // Chaque ligne est un déclencheur cité mot pour mot dans un document de classe.
+  // Avant l'audit du 8 septembre, la moitié n'était couverte par aucun mot-clé :
+  // la capacité restait invisible pour son propre porteur.
+  const cases = [
+    ["You take damage.", "damageTaken"],                                   // Unearthly Reflexes, Inertial Shield
+    ["Another creature damages you.", "damageTaken"],                      // Defensive Roll
+    ["A creature deals damage to the target.", "damageTaken"],             // Parry
+    ["The target deals damage to an ally.", "damageTaken"],                // Feedback Loop
+    ["The target takes damage from a melee strike.", "damageTaken"],       // Riposte
+    ["You lose Stamina and are not dying.", "damageTaken"],                // Furious Change
+    ["The target makes an ability roll.", "powerRollResolved"],            // Again, Turnabout Is Fair Play
+    ["A creature judged by you makes a power roll.", "powerRollResolved"], // Judgment (bane)
+    ["The target is reduced to 0 Stamina.", "reducedToZero"],              // Mark, Judgment
+    ["You reduce a creature to 0 Stamina with a strike.", "reducedToZero"],// Death Strike
+    ["The target dies.", "reducedToZero"],                                 // Word of Final Redemption
+    ["An enemy targets you with a strike.", "abilityUsed"],                // Clever Trick
+    ["The target uses a main action.", "abilityUsed"],                     // Judgment
+    ["The target is force moved.", "forcedMovementLikely"],                // Lines of Force
+    ["The target force moves a creature or object.", "forcedMovementLikely"], // Explosive Assistance
+    ["Another hero ends their turn.", "turnEnd"],                          // Hesitation Is Weakness
+    ["An enemy within 10 squares starts their turn.", "turnStart"],        // Prescient Grace
+    ["The target becomes winded.", "becameWinded"],                        // Finish Them!
+    ["Whenever a hero spends their last Recovery.", "healed"],             // Melodrama
+  ];
+  for (const [trigger, eventType] of cases) {
+    assert.ok(scan(trigger, eventType), `« ${trigger} » n'est reconnu par aucun mot-clé de ${eventType}`);
+  }
+});
+
+test("chaque type d'événement de la table est un événement réel", () => {
+  // Une clé mal orthographiée produirait une liste de mots-clés que rien ne
+  // consulte jamais — panne muette.
+  for (const key of Object.keys(TRIGGER_KEYWORDS)) {
+    assert.ok(Object.values(EVENTS).includes(key), `« ${key} » n'est pas un type d'événement`);
+  }
+});
 
 console.log("\nCatalogue livré");
 

@@ -2,7 +2,7 @@
   "id": "draw-steel-triggers",
   "title": "Draw Steel — Veilleur de Déclencheurs",
   "description": "Signale aux joueurs et au Directeur les déclencheurs qui viennent de s'ouvrir : gains de ressource héroïque, actions déclenchées, conditions et fins d'effet. Signalement uniquement — le module n'écrit jamais sur les fiches.",
-  "version": "0.2.1",
+  "version": "0.3.3",
   "compatibility": {
     "minimum": "13",
     "verified": "14"
@@ -17,7 +17,8 @@
   },
   "authors": [
     {
-      "name": "Henry Fane"
+      "name": "renzo38",
+      "url": "https://github.com/renzo38"
     }
   ],
   "esmodules": [
@@ -39,7 +40,7 @@
     }
   ],
   "socket": true,
-  "url": "https://github.com/henryfane/draw-steel-triggers",
-  "manifest": "https://github.com/henryfane/draw-steel-triggers/releases/latest/download/module.json",
-  "download": "https://github.com/henryfane/draw-steel-triggers/releases/latest/download/module.zip"
+  "url": "https://github.com/renzo38/draw-steel-triggers",
+  "manifest": "https://github.com/renzo38/draw-steel-triggers/releases/latest/download/module.json",
+  "download": "https://github.com/renzo38/draw-steel-triggers/releases/download/v0.3.3/module.zip"
 }

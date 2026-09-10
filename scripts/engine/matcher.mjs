@@ -69,6 +69,7 @@ export function evaluateConditions(clauses, event) {
  * @property {string} name
  * @property {string|null} classId      Draw Steel identifier of the hero's class.
  * @property {string|null} subclassId
+ * @property {number|null} level
  * @property {string[]} ownerIds        User ids who own this actor.
  * @property {number} distance          Squares from the event's origin token; Infinity when unknown.
  * @property {boolean} isSubject        Whether this hero is the one the event happened to.
@@ -105,6 +106,11 @@ export function resolveAudience(entry, heroes) {
   if (audience.class) pool = pool.filter((h) => h.classId === audience.class);
   if (audience.subclass) pool = pool.filter((h) => h.subclassId === audience.subclass);
   if (audience.excludeSubject) pool = pool.filter((h) => !h.isSubject);
+  // A feature gained at a given level. Fails closed: a hero whose level can't
+  // be read is left out rather than prompted for something they may not have.
+  if (Number.isFinite(audience.minLevel)) {
+    pool = pool.filter((h) => Number.isFinite(h.level) && h.level >= audience.minLevel);
+  }
 
   return pool;
 }
@@ -139,7 +145,7 @@ export function resolveAudience(entry, heroes) {
  * @param {Set<string>} [options.disabled]  Entry ids the Director switched off.
  * @returns {Notification[]}
  */
-export function matchEvent(entries, event, heroes, ledger, context, { disabled } = {}) {
+export function matchEvent(entries, event, heroes, ledger, context, { disabled, onSuppressed } = {}) {
   const notifications = [];
 
   for (const entry of entries) {
@@ -149,7 +155,15 @@ export function matchEvent(entries, event, heroes, ledger, context, { disabled }
 
     for (const recipient of resolveAudience(entry, heroes)) {
       const key = Ledger.key(entry.id, recipient.actorUuid);
-      if (!ledger.claim(key, entry.once, context)) continue;
+      if (!ledger.claim(key, entry.once, context)) {
+        // An entry that matched everything and was then dropped because its
+        // "first time this turn" window was already spent used to vanish without
+        // a trace, which makes a working entry indistinguishable from a broken
+        // one — the exact confusion that cost a debugging session. Report it so
+        // the debug log can say "suppressed", not nothing.
+        onSuppressed?.({ entryId: entry.id, recipientName: recipient.name, scope: entry.once });
+        continue;
+      }
 
       notifications.push({
         entryId: entry.id,
